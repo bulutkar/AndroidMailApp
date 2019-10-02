@@ -1,3 +1,5 @@
+package com.example.mailapp;
+
 import java.security.Security;
 import java.util.Properties;
 
@@ -43,8 +45,8 @@ public class MailSender extends javax.mail.Authenticator {
         return new PasswordAuthentication(user, password);
     }
 
-    public synchronized void sendMail(String subject, String body,
-                                      String sender, String recipients) throws Exception {
+    public MimeMessage createMail(String subject, String body,
+                                  String sender, String recipients) throws Exception {
         MimeMessage message = new MimeMessage(session);
         DataHandler dataHandler = new DataHandler(new ByteArrayDataSource(body.getBytes(), "text/plain"));
         message.setSender(new InternetAddress(sender));
@@ -56,6 +58,10 @@ public class MailSender extends javax.mail.Authenticator {
         else
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipients));
 
+        return message;
+    }
+
+    public void sendMail(MimeMessage message) throws Exception {
         Transport.send(message);
     }
 }

@@ -6,4 +6,89 @@
     android:layout_height="match_parent"
     tools:context=".SendMail">
 
+    <EditText
+        android:id="@+id/email_from"
+        android:layout_width="320dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="88dp"
+        android:ems="10"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/email_to"
+        android:layout_width="320dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="28dp"
+        android:ems="10"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/email_from" />
+
+    <EditText
+        android:id="@+id/email_subject"
+        android:layout_width="320dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="28dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/email_to" />
+
+    <ImageButton
+        android:id="@+id/email_send_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="onClickMail"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.963"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_send" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="75dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="96dp"
+        android:text="From         :"
+        app:layout_constraintEnd_toStartOf="@+id/email_from"
+        app:layout_constraintHorizontal_bias="0.687"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="75dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="48dp"
+        android:text="To              :"
+        app:layout_constraintEnd_toStartOf="@+id/email_to"
+        app:layout_constraintHorizontal_bias="0.687"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="75dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="48dp"
+        android:text="Subject      :"
+        app:layout_constraintEnd_toStartOf="@+id/email_subject"
+        app:layout_constraintHorizontal_bias="0.687"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+    <EditText
+        android:id="@+id/email_body"
+        android:layout_width="380dp"
+        android:layout_height="290dp"
+        android:ems="10"
+        android:gravity="start|top"
+        android:inputType="textMultiLine"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,3 +1,5 @@
+package com.example.mailapp;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +38,7 @@ public class ByteArrayDataSource implements DataSource {
     }
 
     public String getName() {
-        return "ByteArrayDataSource";
+        return "com.example.mailapp.ByteArrayDataSource";
     }
 
     public OutputStream getOutputStream() throws IOException {

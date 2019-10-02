@@ -1,5 +1,6 @@
 package com.example.mailapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -10,9 +11,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.microsoft.cognitiveservices.speech.ResultReason;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
-import com.microsoft.cognitiveservices.speech.SpeechRecognitionResult;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
@@ -117,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void MakeItDiff(View view) {
         loginButton.setText("Clicked");
+        Intent intent = new Intent(this, SendMail.class);
+        startActivity(intent);
     }
 
     private void displayException(Exception ex) {
