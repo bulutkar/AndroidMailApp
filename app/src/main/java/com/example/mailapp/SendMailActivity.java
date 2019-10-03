@@ -1,12 +1,14 @@
 package com.example.mailapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,7 +16,7 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
-public class SendMail extends AppCompatActivity {
+public class SendMailActivity extends AppCompatActivity {
 
     private TextView email_from;
     private TextView email_to;
@@ -29,6 +31,10 @@ public class SendMail extends AppCompatActivity {
     private String user;
     private String password;
 
+    SharedPreferences sharedPreferences;
+    private String userMail;
+    private String userPassword;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +45,12 @@ public class SendMail extends AppCompatActivity {
         email_subject = findViewById(R.id.email_subject);
         email_body = findViewById(R.id.email_body);
         send_button = findViewById(R.id.email_send_button);
+
+        sharedPreferences = getSharedPreferences("LoginInfo", 0);
+        userMail = sharedPreferences.getString("Email", "");
+        userPassword = sharedPreferences.getString("Password", "");
+        changeTextView(email_from, userMail);
+        password = userPassword;
     }
 
     public void onClickMail(View view) {
@@ -47,11 +59,25 @@ public class SendMail extends AppCompatActivity {
         subject = email_subject.getText().toString();
         body = email_body.getText().toString();
         user = fromEmail; //change later. // trymyappfortest@gmail.com pw. A987654321
-        password = "A987654321";//changelater
+        Boolean result = false;
+        try {
+            result = new SendEmailAsyncTask().execute().get();
+            if (result) {
+                Toast.makeText(this, "Mail Sent.", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent); // change later
+            } else {
+                Toast.makeText(this, "Sending Failed.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Sending Failed. Exception.", Toast.LENGTH_SHORT).show();
+        }
+    }
 
-        new SendEmailAsyncTask().execute();
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent); // change later
+    private void changeTextView(TextView textView, String text) {
+        SendMailActivity.this.runOnUiThread(() -> {
+            textView.setText(text);
+        });
     }
 
     class SendEmailAsyncTask extends AsyncTask<Void, Void, Boolean> {
@@ -67,7 +93,7 @@ public class SendMail extends AppCompatActivity {
                         fromEmail,
                         toEmail);
             } catch (Exception e) {
-                Log.e("SendMail", e.getMessage(), e);
+                Log.e("SendMailActivity", e.getMessage(), e);
             }
         }
 

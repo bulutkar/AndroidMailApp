@@ -1,0 +1,240 @@
+package com.example.mailapp;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import com.microsoft.cognitiveservices.speech.SpeechConfig;
+import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
+import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
+
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static android.Manifest.permission.INTERNET;
+import static android.Manifest.permission.RECORD_AUDIO;
+
+public class LoginActivity extends AppCompatActivity {
+
+    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
+    private static final String SpeechRegion = "eastus";
+    private SpeechRecognizer reco;
+    private TextView recognizedTextView;
+    private Button loginButton;
+    private TextView emailTextView;
+    private TextView passwordTextView;
+    private ProgressDialog progressDialog;
+
+    private MicrophoneStream microphoneStream;
+    private String emailAddress;
+    private String password;
+    private SharedPreferences sharedPreferences;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        sharedPreferences = getSharedPreferences("LoginInfo", 0);
+        String userMail = sharedPreferences.getString("Email", "empty");
+        String userPassword = sharedPreferences.getString("Password", " ");
+
+        recognizedTextView = findViewById(R.id.recognizedText);
+        loginButton = findViewById(R.id.buttonLogin);
+        emailTextView = findViewById(R.id.inputEmail);
+        passwordTextView = findViewById(R.id.inputPassword);
+
+        if (!userMail.equals("empty") && !userPassword.equals(" ")) {
+            Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
+            emailTextView.setText(userMail);
+            passwordTextView.setText(userPassword);
+            Boolean result = tryLogin();
+            if (result) {
+                Toast.makeText(this, "Logged In.", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                return;
+            }
+        }
+        try {
+            int permissionRequestId = 5;
+            ActivityCompat.requestPermissions(LoginActivity.this, new String[]{RECORD_AUDIO, INTERNET}, permissionRequestId);
+        } catch (Exception ex) {
+            Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
+            recognizedTextView.setText("Could not initialize: " + ex.toString());
+        }
+
+        final SpeechConfig speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+        final String logTag = "reco 3";
+
+        AudioConfig audioInput;
+        ArrayList<String> content = new ArrayList<>();
+        clearTextBox();
+
+        try {
+            content.clear();
+            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
+            reco = new SpeechRecognizer(speechConfig, audioInput);
+
+            reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
+                String s = speechRecognitionResultEventArgs.getResult().getText();
+                Log.i(logTag, "Final result received: " + s);
+                String[] splitedText = s.split("\\.");
+                String comparedText = splitedText[0].toLowerCase();
+                if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
+                    //Button login = findViewById(R.id.buttonLogin);
+                    loginButton.callOnClick();
+                }
+                content.add(s);
+                setRecognizedText(TextUtils.join(" ", content));
+            });
+
+            final Future<Void> task = reco.startContinuousRecognitionAsync();
+
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            displayException(ex);
+        }
+
+    }
+
+    public SpeechConfig createSpeechConfig(String key, String region) {
+        final SpeechConfig speechConfig;
+        try {
+            speechConfig = SpeechConfig.fromSubscription(key, region);
+            return speechConfig;
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            displayException(ex);
+            return null;
+        }
+    }
+
+    private MicrophoneStream createMicrophoneStream() {
+        if (microphoneStream != null) {
+            microphoneStream.close();
+            microphoneStream = null;
+        }
+        microphoneStream = new MicrophoneStream();
+        return microphoneStream;
+    }
+
+    private boolean tryLogin() {
+        emailAddress = emailTextView.getText().toString();
+        password = passwordTextView.getText().toString();
+        if (emailAddress.isEmpty() || password.isEmpty()) return false;
+        MailChecker checker = new MailChecker(emailAddress, password);
+        Boolean result = false;
+        try {
+            result = new LoginAsyncTask(checker).execute().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public void onLogin(View view) {
+        Boolean result = tryLogin();
+        if (result) {
+            reco.stopContinuousRecognitionAsync();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("Email", emailAddress);
+            editor.putString("Password", password);
+            editor.apply();
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    private void displayException(Exception ex) {
+        recognizedTextView.setText(ex.getMessage() + System.lineSeparator() + TextUtils.join(System.lineSeparator(), ex.getStackTrace()));
+    }
+
+    private void clearTextBox() {
+        AppendTextLine("", true);
+    }
+
+    private void setRecognizedText(final String s) {
+        AppendTextLine(s, true);
+    }
+
+    private void AppendTextLine(final String s, final Boolean erase) {
+        LoginActivity.this.runOnUiThread(() -> {
+            if (erase) {
+                recognizedTextView.setText(s);
+            } else {
+                String txt = recognizedTextView.getText().toString();
+                recognizedTextView.setText(txt + System.lineSeparator() + s);
+            }
+        });
+    }
+
+    private void disableButtons() {
+        LoginActivity.this.runOnUiThread(() -> {
+
+        });
+    }
+
+    private void enableButtons() {
+        LoginActivity.this.runOnUiThread(() -> {
+
+        });
+    }
+
+    private void changeProgressDialogText(String text) {
+        LoginActivity.this.runOnUiThread(() -> {
+            progressDialog.setMessage(text);
+        });
+    }
+
+    private <T> void setOnTaskCompletedListener(Future<T> task, OnTaskCompletedListener<T> listener) {
+        s_executorService.submit(() -> {
+            T result = task.get();
+            listener.onCompleted(result);
+            return null;
+        });
+    }
+
+    private interface OnTaskCompletedListener<T> {
+        void onCompleted(T taskResult);
+    }
+
+    private static ExecutorService s_executorService;
+
+    static {
+        s_executorService = Executors.newCachedThreadPool();
+    }
+
+    private class LoginAsyncTask extends AsyncTask<Void, Void, Boolean> {
+        MailChecker checker;
+
+        public LoginAsyncTask(MailChecker checker) {
+            this.checker = checker;
+            if (BuildConfig.DEBUG)
+                Log.v(LoginAsyncTask.class.getName(), "SendEmailAsyncTask()");
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                checker.login();
+                return checker.isLoggedIn();
+            } catch (Exception e) {
+                e.fillInStackTrace();
+                return false;
+            }
+        }
+    }
+}
