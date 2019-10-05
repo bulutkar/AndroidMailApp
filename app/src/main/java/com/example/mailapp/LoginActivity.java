@@ -24,6 +24,7 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.ResultReason;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,6 +52,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private boolean RecordEmail;
     private boolean RecordPassword;
+    private List<String> emailInput;
+    private List<String> pwInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +77,8 @@ public class LoginActivity extends AppCompatActivity {
         RecordPassword = false;
         emailAddress = "";
         password = "";
+        emailInput = new ArrayList<String>();
+        pwInput = new ArrayList<String>();
 
         if (!userMail.equals("empty") && !userPassword.equals(" ")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
@@ -133,7 +138,10 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 else if (RecordPassword) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
-                        passwordTextView.setText(password);
+                        for (int i = 0; i < pwInput.size(); i++) {
+                            password += pwInput.get(i).toLowerCase().replaceAll(".","");
+                        }
+                        changeTextView(passwordTextView, password);
 
                         String speakText = "Password recorded";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -143,12 +151,15 @@ public class LoginActivity extends AppCompatActivity {
                         RecordPassword = false;
                     }
                     else {
-                        password += comparedText;
+                        pwInput.add(comparedText);
                     }
                 }
                 else if (RecordEmail) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
-                        emailTextView.setText(password);
+                        for (int i = 0; i < pwInput.size(); i++) {
+                            emailAddress += emailInput.get(i).toLowerCase().replaceAll(".","");
+                        }
+                        changeTextView(emailTextView, emailAddress);
 
                         String speakText = "Email recorded";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -158,7 +169,7 @@ public class LoginActivity extends AppCompatActivity {
                         RecordEmail = false;
                     }
                     else {
-                        emailAddress += comparedText;
+                        emailInput.add(comparedText);
                     }
                 }
 
@@ -241,6 +252,12 @@ public class LoginActivity extends AppCompatActivity {
 
     private void clearTextBox() {
         AppendTextLine("", true);
+    }
+
+    private void changeTextView(TextView textView, String text) {
+        LoginActivity.this.runOnUiThread(() -> {
+            textView.setText(text);
+        });
     }
 
     private void setRecognizedText(final String s) {
