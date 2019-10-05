@@ -139,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
                 else if (RecordPassword) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
                         for (int i = 0; i < pwInput.size(); i++) {
-                            password += pwInput.get(i).toLowerCase().replaceAll(".","");
+                            password += pwInput.get(i).replace(".","").replace(" ", "");
                         }
                         changeTextView(passwordTextView, password);
 
@@ -149,7 +149,7 @@ public class LoginActivity extends AppCompatActivity {
                         result.close();
 
                         pwInput.clear();
-                        
+
                         RecordPassword = false;
                     }
                     else {
@@ -159,7 +159,7 @@ public class LoginActivity extends AppCompatActivity {
                 else if (RecordEmail) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
                         for (int i = 0; i < pwInput.size(); i++) {
-                            emailAddress += emailInput.get(i).toLowerCase().replaceAll(".","");
+                            emailAddress += emailInput.get(i).replace(".","").replace(" ", "");
                         }
                         changeTextView(emailTextView, emailAddress);
 
