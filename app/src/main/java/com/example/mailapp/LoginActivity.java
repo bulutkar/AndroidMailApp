@@ -148,6 +148,8 @@ public class LoginActivity extends AppCompatActivity {
                         assert (result != null);
                         result.close();
 
+                        pwInput.clear();
+                        
                         RecordPassword = false;
                     }
                     else {
@@ -165,6 +167,8 @@ public class LoginActivity extends AppCompatActivity {
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert (result != null);
                         result.close();
+
+                        emailInput.clear();
 
                         RecordEmail = false;
                     }
