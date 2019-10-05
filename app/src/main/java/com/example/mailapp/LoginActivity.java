@@ -18,6 +18,10 @@ import androidx.core.app.ActivityCompat;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
+import com.microsoft.cognitiveservices.speech.SpeechSynthesisCancellationDetails;
+import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
+import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
+import com.microsoft.cognitiveservices.speech.ResultReason;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +46,11 @@ public class LoginActivity extends AppCompatActivity {
     private String emailAddress;
     private String password;
     private SharedPreferences sharedPreferences;
+    private SpeechConfig speechConfig;
+    private SpeechSynthesizer synthesizer;
+
+    private boolean RecordEmail;
+    private boolean RecordPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +64,16 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.buttonLogin);
         emailTextView = findViewById(R.id.inputEmail);
         passwordTextView = findViewById(R.id.inputPassword);
+
+        speechConfig = SpeechConfig.fromSubscription("7f54f290e9b64c45a3d649ecf5d0c7ba", "eastus");
+        assert(speechConfig != null);
+        synthesizer = new SpeechSynthesizer(speechConfig);
+        assert(synthesizer != null);
+
+        RecordEmail = false;
+        RecordPassword = false;
+        emailAddress = "";
+        password = "";
 
         if (!userMail.equals("empty") && !userPassword.equals(" ")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
@@ -93,8 +112,66 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i(logTag, "Final result received: " + s);
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
+
+                if (!RecordPassword && !RecordEmail) {
+                    if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")) {
+                        String speakText = "Recording email now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        RecordEmail = true;
+                    }
+                    if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
+                        String speakText = "Recording password now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        RecordPassword = true;
+                    }
+                }
+                else if (RecordPassword) {
+                    if (comparedText.equals("stop") || comparedText.equals("end")) {
+                        passwordTextView.setText(password);
+
+                        String speakText = "Password recorded";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        RecordPassword = false;
+                    }
+                    else {
+                        password += comparedText;
+                    }
+                }
+                else if (RecordEmail) {
+                    if (comparedText.equals("stop") || comparedText.equals("end")) {
+                        emailTextView.setText(password);
+
+                        String speakText = "Email recorded";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        RecordEmail = false;
+                    }
+                    else {
+                        emailAddress += comparedText;
+                    }
+                }
+
                 if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
                     //Button login = findViewById(R.id.buttonLogin);
+                    String speakText = "Logging in now";
+                    SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                    assert result != null;
+                    result.close();
+
+                    synthesizer.close();
+                    speechConfig.close();
+
                     loginButton.callOnClick();
                 }
                 content.add(s);
