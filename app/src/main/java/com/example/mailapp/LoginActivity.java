@@ -139,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
                 else if (RecordPassword) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
                         for (int i = 0; i < pwInput.size(); i++) {
-                            password += pwInput.get(i).replace(".","").replace(" ", "");
+                            password += pwInput.get(i).replace(" ", "");
                         }
                         changeTextView(passwordTextView, password);
 
@@ -153,13 +153,16 @@ public class LoginActivity extends AppCompatActivity {
                         RecordPassword = false;
                     }
                     else {
-                        pwInput.add(comparedText);
+                        if (s != null && s.length() > 0 && s.charAt(s.length() - 1) == '.') {
+                            s = s.substring(0, s.length() - 1);
+                        }
+                        pwInput.add(s.toLowerCase());
                     }
                 }
                 else if (RecordEmail) {
                     if (comparedText.equals("stop") || comparedText.equals("end")) {
-                        for (int i = 0; i < pwInput.size(); i++) {
-                            emailAddress += emailInput.get(i).replace(".","").replace(" ", "");
+                        for (int i = 0; i < emailInput.size(); i++) {
+                            emailAddress += emailInput.get(i).replace(" ", "");
                         }
                         changeTextView(emailTextView, emailAddress);
 
@@ -173,7 +176,10 @@ public class LoginActivity extends AppCompatActivity {
                         RecordEmail = false;
                     }
                     else {
-                        emailInput.add(comparedText);
+                        if (s != null && s.length() > 0 && s.charAt(s.length() - 1) == '.') {
+                            s = s.substring(0, s.length() - 1);
+                        }
+                        emailInput.add(s.toLowerCase());
                     }
                 }
 
