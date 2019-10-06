@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> content = new ArrayList<>();
 
         try {
+            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);

@@ -128,133 +128,135 @@ public class LoginActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (!RecordPassword && !RecordEmail) {
-                    if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
-                            || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
-                        emailAddress = "";
+                if (speechSynthesisResult.isDone()) {
+                    if (!RecordPassword && !RecordEmail) {
+                        if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
+                                || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
+                            emailAddress = "";
 
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Recording email now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
+                            reco.stopContinuousRecognitionAsync();
+                            String speakText = "Recording email now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
 
-                        RecordEmail = true;
-                        reco.startContinuousRecognitionAsync();
+                            RecordEmail = true;
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
+                            password = "";
+
+                            reco.stopContinuousRecognitionAsync();
+                            String speakText = "Recording password now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
+
+                            RecordPassword = true;
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                            reco.stopContinuousRecognitionAsync();
+                            String speakText = "Replaying introduction now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
+
+                            result = synthesizer.SpeakText(introductionText);
+                            assert result != null;
+                            result.close();
+                            reco.startContinuousRecognitionAsync();
+                        }
                     }
-                    else if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
-                        password = "";
+                    else if (RecordPassword) {
+                        if (comparedText.equals("stop") || comparedText.equals("end")) {
+                            for (int i = 0; i < pwInput.size(); i++) {
+                                password += pwInput.get(i).replace(" ", "");
+                            }
+                            changeTextView(passwordTextView, password);
 
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Recording password now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
+                            reco.stopContinuousRecognitionAsync();
+                            String speakText = "Password recorded";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
 
-                        RecordPassword = true;
-                        reco.startContinuousRecognitionAsync();
+                            pwInput.clear();
+
+                            RecordPassword = false;
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                            reco.stopContinuousRecognitionAsync();
+
+                            String speakText = "Replaying introduction now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
+
+                            result = synthesizer.SpeakText(introductionText);
+                            assert result != null;
+                            result.close();
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else {
+                            if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
+                                s = s.substring(0, s.length() - 1);
+                            }
+                            pwInput.add(s.toLowerCase());
+                        }
                     }
-                    else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Replaying introduction now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
+                    else if (RecordEmail) {
+                        if (comparedText.equals("stop") || comparedText.equals("end")) {
+                            for (int i = 0; i < emailInput.size(); i++) {
+                                emailAddress += emailInput.get(i).replace(" ", "");
+                            }
+                            changeTextView(emailTextView, emailAddress);
 
-                        result = synthesizer.SpeakText(introductionText);
+                            reco.stopContinuousRecognitionAsync();
+                            String speakText = "Email recorded";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
+
+                            emailInput.clear();
+
+                            RecordEmail = false;
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                            reco.stopContinuousRecognitionAsync();
+
+                            String speakText = "Replaying introduction now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                            assert (result != null);
+                            result.close();
+
+                            result = synthesizer.SpeakText(introductionText);
+                            assert result != null;
+                            result.close();
+                            reco.startContinuousRecognitionAsync();
+                        }
+                        else {
+                            if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
+                                s = s.substring(0, s.length() - 1);
+                            }
+                            emailInput.add(s.toLowerCase());
+                        }
+                    }
+
+                    if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
+                        //Button login = findViewById(R.id.buttonLogin);
+                        String speakText = "Logging in now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert result != null;
                         result.close();
-                        reco.startContinuousRecognitionAsync();
+
+                        synthesizer.close();
+                        speechConfig.close();
+
+                        loginButton.callOnClick();
                     }
-                }
-                else if (RecordPassword) {
-                    if (comparedText.equals("stop") || comparedText.equals("end")) {
-                        for (int i = 0; i < pwInput.size(); i++) {
-                            password += pwInput.get(i).replace(" ", "");
-                        }
-                        changeTextView(passwordTextView, password);
-
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Password recorded";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
-
-                        pwInput.clear();
-
-                        RecordPassword = false;
-                        reco.startContinuousRecognitionAsync();
-                    }
-                    else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
-                        reco.stopContinuousRecognitionAsync();
-
-                        String speakText = "Replaying introduction now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
-
-                        result = synthesizer.SpeakText(introductionText);
-                        assert result != null;
-                        result.close();
-                        reco.startContinuousRecognitionAsync();
-                    }
-                    else {
-                        if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
-                            s = s.substring(0, s.length() - 1);
-                        }
-                        pwInput.add(s.toLowerCase());
-                    }
-                }
-                else if (RecordEmail) {
-                    if (comparedText.equals("stop") || comparedText.equals("end")) {
-                        for (int i = 0; i < emailInput.size(); i++) {
-                            emailAddress += emailInput.get(i).replace(" ", "");
-                        }
-                        changeTextView(emailTextView, emailAddress);
-
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Email recorded";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
-
-                        emailInput.clear();
-
-                        RecordEmail = false;
-                        reco.startContinuousRecognitionAsync();
-                    }
-                    else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
-                        reco.stopContinuousRecognitionAsync();
-
-                        String speakText = "Replaying introduction now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert (result != null);
-                        result.close();
-
-                        result = synthesizer.SpeakText(introductionText);
-                        assert result != null;
-                        result.close();
-                        reco.startContinuousRecognitionAsync();
-                    }
-                    else {
-                        if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
-                            s = s.substring(0, s.length() - 1);
-                        }
-                        emailInput.add(s.toLowerCase());
-                    }
-                }
-
-                if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
-                    //Button login = findViewById(R.id.buttonLogin);
-                    String speakText = "Logging in now";
-                    SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                    assert result != null;
-                    result.close();
-
-                    synthesizer.close();
-                    speechConfig.close();
-
-                    loginButton.callOnClick();
                 }
                 content.add(s);
                 setRecognizedText(TextUtils.join(" ", content));
