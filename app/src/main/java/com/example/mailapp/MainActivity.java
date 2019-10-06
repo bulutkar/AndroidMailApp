@@ -24,8 +24,8 @@ import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
-    private static final String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
+    private static final String SpeechRegion = "westus";
 
     private SharedPreferences sharedPreferences;
     private ImageButton newMailButton;
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (comparedText.equals("start mail") || comparedText.equals("new mail") || comparedText.equals("start new mail") || comparedText.equals("create mail")
+                if (comparedText.equals("start message") || comparedText.equals("new message") || comparedText.equals("start new message") || comparedText.equals("create message")
                         || comparedText.equals("start email") || comparedText.equals("new email") || comparedText.equals("start new email") || comparedText.equals("create email")) {
                     reco.stopContinuousRecognitionAsync();
                     Intent intent = new Intent(this, SendMailActivity.class);

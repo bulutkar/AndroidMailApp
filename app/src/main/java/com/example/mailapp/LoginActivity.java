@@ -17,11 +17,9 @@ import androidx.core.app.ActivityCompat;
 
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
-import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
-import com.microsoft.cognitiveservices.speech.SpeechSynthesisCancellationDetails;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
-import com.microsoft.cognitiveservices.speech.ResultReason;
+import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +32,8 @@ import static android.Manifest.permission.RECORD_AUDIO;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
-    private static final String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
+    private static final String SpeechRegion = "westus";
 
     private TextView recognizedTextView;
     private Button loginButton;
@@ -90,7 +88,9 @@ public class LoginActivity extends AppCompatActivity {
         password = "";
         emailInput = new ArrayList<String>();
         pwInput = new ArrayList<String>();
-
+        /*
+        * Add Login failed Text-to-speech
+        * */
         if (!userMail.equals("empty") && !userPassword.equals(" ")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
             emailTextView.setText(userMail);
@@ -117,18 +117,21 @@ public class LoginActivity extends AppCompatActivity {
         clearTextBox();
 
         try {
-            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-
+            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
+            synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                e.close();
+                speechSynthesisResult.cancel(true);
+            });
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
                 Log.i(logTag, "Final result received: " + s);
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (speechSynthesisResult.isDone()) {
+                if (speechSynthesisResult.isCancelled()) {
                     if (!RecordPassword && !RecordEmail) {
                         if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
                                 || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
