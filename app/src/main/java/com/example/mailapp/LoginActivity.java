@@ -119,21 +119,30 @@ public class LoginActivity extends AppCompatActivity {
                 String comparedText = splitedText[0].toLowerCase();
 
                 if (!RecordPassword && !RecordEmail) {
-                    if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")) {
+                    if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
+                    || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
+                        emailAddress = "";
+
+                        reco.stopContinuousRecognitionAsync();
                         String speakText = "Recording email now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert (result != null);
                         result.close();
 
                         RecordEmail = true;
+                        reco.startContinuousRecognitionAsync();
                     }
                     if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
+                        password = "";
+
+                        reco.stopContinuousRecognitionAsync();
                         String speakText = "Recording password now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert (result != null);
                         result.close();
 
                         RecordPassword = true;
+                        reco.startContinuousRecognitionAsync();
                     }
                 }
                 else if (RecordPassword) {
@@ -143,6 +152,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                         changeTextView(passwordTextView, password);
 
+                        reco.stopContinuousRecognitionAsync();
                         String speakText = "Password recorded";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert (result != null);
@@ -151,6 +161,7 @@ public class LoginActivity extends AppCompatActivity {
                         pwInput.clear();
 
                         RecordPassword = false;
+                        reco.startContinuousRecognitionAsync();
                     }
                     else {
                         if (s != null && s.length() > 0 && s.charAt(s.length() - 1) == '.') {
@@ -166,6 +177,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                         changeTextView(emailTextView, emailAddress);
 
+                        reco.stopContinuousRecognitionAsync();
                         String speakText = "Email recorded";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         assert (result != null);
@@ -174,6 +186,7 @@ public class LoginActivity extends AppCompatActivity {
                         emailInput.clear();
 
                         RecordEmail = false;
+                        reco.startContinuousRecognitionAsync();
                     }
                     else {
                         if (s != null && s.length() > 0 && s.charAt(s.length() - 1) == '.') {
