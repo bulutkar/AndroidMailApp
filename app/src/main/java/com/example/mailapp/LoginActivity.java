@@ -52,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private boolean RecordEmail;
     private boolean RecordPassword;
+    private boolean onLaunch;
     private List<String> emailInput;
     private List<String> pwInput;
 
@@ -68,13 +69,14 @@ public class LoginActivity extends AppCompatActivity {
         emailTextView = findViewById(R.id.inputEmail);
         passwordTextView = findViewById(R.id.inputPassword);
 
-        speechConfig = SpeechConfig.fromSubscription("7f54f290e9b64c45a3d649ecf5d0c7ba", "eastus");
+        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         assert(speechConfig != null);
         synthesizer = new SpeechSynthesizer(speechConfig);
         assert(synthesizer != null);
 
         RecordEmail = false;
         RecordPassword = false;
+        onLaunch = true;
         emailAddress = "";
         password = "";
         emailInput = new ArrayList<String>();
@@ -100,7 +102,6 @@ public class LoginActivity extends AppCompatActivity {
             recognizedTextView.setText("Could not initialize: " + ex.toString());
         }
 
-        final SpeechConfig speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         final String logTag = "reco 3";
 
         AudioConfig audioInput;
@@ -118,6 +119,39 @@ public class LoginActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
+                if (onLaunch) {
+                    reco.stopContinuousRecognitionAsync();
+
+                    String speakText = "Welcome to the mail app!";
+                    SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                    assert (result != null);
+                    result.close();
+
+                    speakText = "You can use start, begin or enter keywords to fill email and password field. For example start email keyword will begin to listen your email address. " +
+                            "When you finish telling your input, you can use stop or end keyword to finish listening.";
+                    result = synthesizer.SpeakText(speakText);
+                    assert (result != null);
+                    result.close();
+
+                    speakText = "When you finish entering email address and password fields. You can use login keyword to enter your email account.";
+                    result = synthesizer.SpeakText(speakText);
+                    assert (result != null);
+                    result.close();
+
+                    speakText = "If you want to listen this inroduction part again. You can use repeat commands keyword to replay introduction.";
+                    result = synthesizer.SpeakText(speakText);
+                    assert (result != null);
+                    result.close();
+
+                    speakText = "Listening your commands now.";
+                    result = synthesizer.SpeakText(speakText);
+                    assert (result != null);
+                    result.close();
+
+                    onLaunch = false;
+                    reco.startContinuousRecognitionAsync();
+                }
+
                 if (!RecordPassword && !RecordEmail) {
                     if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
                     || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
@@ -132,7 +166,7 @@ public class LoginActivity extends AppCompatActivity {
                         RecordEmail = true;
                         reco.startContinuousRecognitionAsync();
                     }
-                    if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
+                    else if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
                         password = "";
 
                         reco.stopContinuousRecognitionAsync();
@@ -142,6 +176,17 @@ public class LoginActivity extends AppCompatActivity {
                         result.close();
 
                         RecordPassword = true;
+                        reco.startContinuousRecognitionAsync();
+                    }
+                    else if (comparedText.equals("repeat commands")) {
+                        reco.stopContinuousRecognitionAsync();
+
+                        String speakText = "Replaying introduction now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        onLaunch = true;
                         reco.startContinuousRecognitionAsync();
                     }
                 }
@@ -161,6 +206,17 @@ public class LoginActivity extends AppCompatActivity {
                         pwInput.clear();
 
                         RecordPassword = false;
+                        reco.startContinuousRecognitionAsync();
+                    }
+                    else if (comparedText.equals("repeat commands")) {
+                        reco.stopContinuousRecognitionAsync();
+
+                        String speakText = "Replaying introduction now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        onLaunch = true;
                         reco.startContinuousRecognitionAsync();
                     }
                     else {
@@ -186,6 +242,17 @@ public class LoginActivity extends AppCompatActivity {
                         emailInput.clear();
 
                         RecordEmail = false;
+                        reco.startContinuousRecognitionAsync();
+                    }
+                    else if (comparedText.equals("repeat commands")) {
+                        reco.stopContinuousRecognitionAsync();
+
+                        String speakText = "Replaying introduction now";
+                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                        assert (result != null);
+                        result.close();
+
+                        onLaunch = true;
                         reco.startContinuousRecognitionAsync();
                     }
                     else {
