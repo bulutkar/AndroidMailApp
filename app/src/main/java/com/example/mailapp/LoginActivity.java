@@ -251,6 +251,8 @@ public class LoginActivity extends AppCompatActivity {
                         result.close();
                         synthesizer.close();
                         speechConfig.close();
+                        if (!speechSynthesisResult.isCancelled())
+                            speechSynthesisResult.cancel(true);
 
                         loginButton.callOnClick();
                     }

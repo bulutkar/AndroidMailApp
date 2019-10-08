@@ -256,13 +256,14 @@ public class SendMailActivity extends AppCompatActivity {
 
                     if (comparedText.equals("send") || comparedText.equals("deliver") || comparedText.equals("sent")) {
                         reco.stopContinuousRecognitionAsync();
-                        boolean isSendSuccessful = send_button.callOnClick();
-                        if (isSendSuccessful) {
+                        if (send_button.callOnClick()) {
                             String successText = "Email sent successfully! ";
                             synthesizer.SpeakText(successText);
                             synthesizer.close();
                             speechConfig.close();
                             microphoneStream.close();
+                            if (!speechSynthesisResult.isCancelled())
+                                speechSynthesisResult.cancel(true);
                             Intent intent = new Intent(this, MainActivity.class);
                             startActivity(intent); // change later
                         } else {
