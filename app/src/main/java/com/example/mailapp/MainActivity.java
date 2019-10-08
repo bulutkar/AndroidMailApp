@@ -24,8 +24,8 @@ import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
-    private static final String SpeechRegion = "westus";
+    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
+    private static final String SpeechRegion = "eastus";
 
     private SharedPreferences sharedPreferences;
     private ImageButton newMailButton;
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
         introductionText += "If you want to listen this introduction part again, you can use repeat commands keyword to replay introduction. ";
+        introductionText += "Listening your commands now! ";
 
         try {
             int permissionRequestId = 5;
@@ -81,24 +82,35 @@ public class MainActivity extends AppCompatActivity {
                 String comparedText = splitedText[0].toLowerCase();
 
                 if (speechSynthesisResult.isCancelled()) {
-                    if (comparedText.equals("start message") || comparedText.equals("new message") || comparedText.equals("start new message") || comparedText.equals("create message")
-                            || comparedText.equals("start email") || comparedText.equals("new email") || comparedText.equals("start new email") || comparedText.equals("create email")) {
-                        reco.stopContinuousRecognitionAsync();
-                        Intent intent = new Intent(this, SendMailActivity.class);
-                        startActivity(intent);
+                    switch (comparedText) {
+                        case "start message":
+                        case "new message":
+                        case "start new message":
+                        case "create message":
+                        case "start email":
+                        case "new email":
+                        case "start new email":
+                        case "create email":
+                        case "start mail":
+                        case "new mail":
+                        case "start new mail":
+                        case "create mail":
+                            newMailButton.callOnClick();
 
-                    }
-                    else if (comparedText.equals("logout") || comparedText.equals("log out")) {
-                        reco.stopContinuousRecognitionAsync();
-                        logoutButton.callOnClick();
-                    }
-                    else if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
-                        reco.stopContinuousRecognitionAsync();
-                        SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
-                        result.close();
-                        result = synthesizer.SpeakText(introductionText);
-                        result.close();
-                        reco.startContinuousRecognitionAsync();
+                            break;
+                        case "logout":
+                        case "log out":
+                            logoutButton.callOnClick();
+                            break;
+                        case "repeat command":
+                        case "repeat commands":
+                            reco.stopContinuousRecognitionAsync();
+                            SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
+                            result.close();
+                            result = synthesizer.SpeakText(introductionText);
+                            result.close();
+                            reco.startContinuousRecognitionAsync();
+                            break;
                     }
                 }
                 content.add(s);
@@ -112,11 +124,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void writeNewMail(View view) {
+        reco.stopContinuousRecognitionAsync();
+        synthesizer.close();
+        microphoneStream.close();
         Intent intent = new Intent(this, SendMailActivity.class);
         startActivity(intent);
     }
 
     public void logOut(View view) {
+        reco.stopContinuousRecognitionAsync();
+        synthesizer.close();
+        microphoneStream.close();
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove("Email");
         editor.remove("Password");

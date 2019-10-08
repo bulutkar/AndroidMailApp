@@ -31,8 +31,8 @@ import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class SendMailActivity extends AppCompatActivity {
-    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
-    private static final String SpeechRegion = "westus";
+    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
+    private static final String SpeechRegion = "eastus";
 
     private TextView email_from;
     private TextView email_to;
@@ -136,37 +136,52 @@ public class SendMailActivity extends AppCompatActivity {
                         result = synthesizer.SpeakText(introductionText);
                         result.close();
                         reco.startContinuousRecognitionAsync();
-                    }
-                    else if (!RecordSubject && !RecordReceiver && !RecordBody) {
-                        if (comparedText.equals("start receiver") || comparedText.equals("begin receiver") || comparedText.equals("enter receiver")) {
-                            toEmail = "";
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Recording receiver email address now! ";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            RecordReceiver = true;
-                            reco.startContinuousRecognitionAsync();
+                    } else if (!RecordSubject && !RecordReceiver && !RecordBody) {
+                        switch (comparedText) {
+                            case "start receiver":
+                            case "begin receiver":
+                            case "enter receiver":
+                            case "start receivers":
+                            case "begin receivers":
+                            case "enter receivers": {
+                                toEmail = "";
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Recording receiver email address now! ";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                RecordReceiver = true;
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            case "start subject":
+                            case "begin subject":
+                            case "enter subject":
+                            case "start subjects":
+                            case "begin subjects":
+                            case "enter subjects":{
+                                subject = "";
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Recording subject of the mail now! ";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                RecordSubject = true;
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            case "start body":
+                            case "begin body":
+                            case "enter body": {
+                                body = "";
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Recording body of the mail now! ";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                RecordBody = true;
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
                         }
-                        else if (comparedText.equals("start subject") || comparedText.equals("begin subject") || comparedText.equals("enter subject")) {
-                            subject = "";
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Recording subject of the mail now! ";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            RecordSubject = true;
-                            reco.startContinuousRecognitionAsync();
-                        }
-                        else if (comparedText.equals("start body") || comparedText.equals("begin body") || comparedText.equals("enter body")) {
-                            body = "";
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Recording body of the mail now! ";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            RecordBody = true;
-                            reco.startContinuousRecognitionAsync();
-                        }
-                    }
-                    else if (RecordBody) {
+                    } else if (RecordBody) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < BodyInput.size(); i++) {
                                 body += BodyInput.get(i).replace(" ", "");
@@ -180,12 +195,10 @@ public class SendMailActivity extends AppCompatActivity {
                             BodyInput.clear();
                             RecordBody = false;
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else {
+                        } else {
                             BodyInput.add(s);
                         }
-                    }
-                    else if (RecordReceiver) {
+                    } else if (RecordReceiver) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < ReceiverInput.size(); i++) {
                                 toEmail += ReceiverInput.get(i).replace(" ", "");
@@ -199,15 +212,13 @@ public class SendMailActivity extends AppCompatActivity {
                             ReceiverInput.clear();
                             RecordReceiver = false;
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else {
+                        } else {
                             if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
                                 s = s.substring(0, s.length() - 1);
                             }
                             ReceiverInput.add(s.toLowerCase());
                         }
-                    }
-                    else if (RecordSubject) {
+                    } else if (RecordSubject) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < SubjectInput.size(); i++) {
                                 subject += SubjectInput.get(i).replace(" ", "");
@@ -221,24 +232,23 @@ public class SendMailActivity extends AppCompatActivity {
                             SubjectInput.clear();
                             RecordSubject = false;
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else {
+                        } else {
                             SubjectInput.add(s.toLowerCase());
                         }
                     }
 
-                    if (comparedText.equals("send") || comparedText.equals("deliver")) {
+                    if (comparedText.equals("send") || comparedText.equals("deliver") || comparedText.equals("sent")) {
                         reco.stopContinuousRecognitionAsync();
                         boolean isSendSuccessful = send_button.callOnClick();
                         if (isSendSuccessful) {
-                            String successText = "Email sended successfully! ";
+                            String successText = "Email sent successfully! ";
                             synthesizer.SpeakText(successText);
                             synthesizer.close();
                             speechConfig.close();
+                            microphoneStream.close();
                             Intent intent = new Intent(this, MainActivity.class);
                             startActivity(intent); // change later
-                        }
-                        else {
+                        } else {
                             String errorText = "Send email request failed! ";
                             synthesizer.SpeakText(errorText);
                             reco.startContinuousRecognitionAsync();

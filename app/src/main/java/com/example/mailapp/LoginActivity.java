@@ -32,8 +32,8 @@ import static android.Manifest.permission.RECORD_AUDIO;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
-    private static final String SpeechRegion = "westus";
+    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
+    private static final String SpeechRegion = "eastus";
 
     private TextView recognizedTextView;
     private Button loginButton;
@@ -54,7 +54,6 @@ public class LoginActivity extends AppCompatActivity {
     private String emailAddress;
     private String password;
     private String introductionText;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,33 +125,45 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (speechSynthesisResult.isCancelled()) {
                     if (!RecordPassword && !RecordEmail) {
-                        if (comparedText.equals("start email") || comparedText.equals("begin email") || comparedText.equals("enter email")
-                                || comparedText.equals("start mail") || comparedText.equals("begin mail") || comparedText.equals("enter mail")) {
-                            emailAddress = "";
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Recording email now";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            RecordEmail = true;
-                            reco.startContinuousRecognitionAsync();
-                        }
-                        else if (comparedText.equals("start password") || comparedText.equals("begin password") || comparedText.equals("enter password")) {
-                            password = "";
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Recording password now";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            RecordPassword = true;
-                            reco.startContinuousRecognitionAsync();
-                        }
-                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Replaying introduction now";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            result = synthesizer.SpeakText(introductionText);
-                            result.close();
-                            reco.startContinuousRecognitionAsync();
+                        switch (comparedText) {
+                            case "start email":
+                            case "begin email":
+                            case "enter email":
+                            case "start mail":
+                            case "begin mail":
+                            case "enter mail": {
+                                emailAddress = "";
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Recording email now";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                RecordEmail = true;
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            case "start password":
+                            case "begin password":
+                            case "enter password": {
+                                password = "";
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Recording password now";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                RecordPassword = true;
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            case "repeat commands":
+                            case "repeat command": {
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Replaying introduction now";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                result = synthesizer.SpeakText(introductionText);
+                                result.close();
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
                         }
                     }
                     else if (RecordPassword) {
@@ -281,6 +292,8 @@ public class LoginActivity extends AppCompatActivity {
         Boolean result = tryLogin();
         if (result) {
             reco.stopContinuousRecognitionAsync();
+            synthesizer.close();
+            microphoneStream.close();
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("Email", emailAddress);
             editor.putString("Password", password);
