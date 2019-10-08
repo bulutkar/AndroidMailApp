@@ -46,9 +46,6 @@ public class MainActivity extends AppCompatActivity {
         newMailButton = findViewById(R.id.new_mail);
         logoutButton = findViewById(R.id.logoutButton);
 
-        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        synthesizer = new SpeechSynthesizer(speechConfig);
-
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
@@ -61,8 +58,9 @@ public class MainActivity extends AppCompatActivity {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
         }
 
+        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+        synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "reco 3";
-
         AudioConfig audioInput;
         ArrayList<String> content = new ArrayList<>();
 
