@@ -63,6 +63,7 @@ public class SendMailActivity extends AppCompatActivity {
     private List<String> ReceiverInput;
     private List<String> SubjectInput;
     private List<String> BodyInput;
+    private boolean isSpeakStop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +89,7 @@ public class SendMailActivity extends AppCompatActivity {
         introductionText += "When you finish entering all the necessary fields. You can use send or deliver keyword to send the email. ";
         introductionText += "You will get a response whether your email is send or not. ";
         introductionText += "If you want to listen this introduction part again. You can use repeat commands keyword to replay introduction. ";
-        introductionText += "Listening your commands now! ";
+        introductionText += "Listening your commands now!";
 
         RecordBody = false;
         RecordReceiver = false;
@@ -115,11 +116,27 @@ public class SendMailActivity extends AppCompatActivity {
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
-            synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
-                e.close();
-                speechSynthesisResult.cancel(true);
-            });
+            sharedPreferences = getSharedPreferences("IntroSpeaksSendMail", 0);
+            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            Future<SpeechSynthesisResult> speechSynthesisResult;
+            if (!isRead) {
+                speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putBoolean("IntroSpeaksSendMail", true);
+                    editor.apply();
+                });
+            } else {
+                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                });
+            }
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
@@ -127,7 +144,7 @@ public class SendMailActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (speechSynthesisResult.isCancelled()) {
+                if (isSpeakStop) {
                     if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
                         reco.stopContinuousRecognitionAsync();
                         String speakText = "Replaying introduction now";
@@ -158,7 +175,7 @@ public class SendMailActivity extends AppCompatActivity {
                             case "enter subject":
                             case "start subjects":
                             case "begin subjects":
-                            case "enter subjects":{
+                            case "enter subjects": {
                                 subject = "";
                                 reco.stopContinuousRecognitionAsync();
                                 String speakText = "Recording subject of the mail now! ";

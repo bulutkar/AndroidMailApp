@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private SpeechSynthesizer synthesizer;
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
-
+    private boolean isSpeakStop;
     private String introductionText;
 
     @Override
@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("LoginInfo", 0);
         newMailButton = findViewById(R.id.new_mail);
         logoutButton = findViewById(R.id.logoutButton);
+
+        isSpeakStop = true;
 
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
@@ -69,11 +71,27 @@ public class MainActivity extends AppCompatActivity {
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
-            synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
-                e.close();
-                speechSynthesisResult.cancel(true);
-            });
+            sharedPreferences = getSharedPreferences("IntroSpeaksMain", 0);
+            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            Future<SpeechSynthesisResult> speechSynthesisResult;
+            if (!isRead) {
+                speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putBoolean("IntroSpeaksMain", true);
+                    editor.apply();
+                });
+            } else {
+                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                });
+            }
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
@@ -81,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (speechSynthesisResult.isCancelled()) {
+                if (isSpeakStop) {
                     switch (comparedText) {
                         case "start message":
                         case "new message":

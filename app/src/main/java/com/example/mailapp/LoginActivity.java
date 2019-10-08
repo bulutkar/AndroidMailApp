@@ -54,6 +54,8 @@ public class LoginActivity extends AppCompatActivity {
     private String emailAddress;
     private String password;
     private String introductionText;
+    private boolean isSpeakStop;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +82,7 @@ public class LoginActivity extends AppCompatActivity {
         password = "";
         emailInput = new ArrayList<String>();
         pwInput = new ArrayList<String>();
+        isSpeakStop = false;
 
         if (!userMail.equals("empty") && !userPassword.equals(" ")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
@@ -112,18 +115,36 @@ public class LoginActivity extends AppCompatActivity {
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
-            synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
-                e.close();
-                speechSynthesisResult.cancel(true);
-            });
+
+            sharedPreferences = getSharedPreferences("IntroSpeaksLogin", 0);
+            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            Future<SpeechSynthesisResult> speechSynthesisResult;
+            if (!isRead) {
+                speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putBoolean("IntroSpeaksLogin", true);
+                    editor.apply();
+                });
+            } else {
+                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                    e.close();
+                    speechSynthesisResult.cancel(true);
+                    isSpeakStop = true;
+                });
+            }
+
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
                 Log.i(logTag, "Final result received: " + s);
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (speechSynthesisResult.isCancelled()) {
+                if (isSpeakStop) {
                     if (!RecordPassword && !RecordEmail) {
                         switch (comparedText) {
                             case "start email":
@@ -165,8 +186,7 @@ public class LoginActivity extends AppCompatActivity {
                                 break;
                             }
                         }
-                    }
-                    else if (RecordPassword) {
+                    } else if (RecordPassword) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < pwInput.size(); i++) {
                                 password += pwInput.get(i).replace(" ", "");
@@ -179,8 +199,7 @@ public class LoginActivity extends AppCompatActivity {
                             pwInput.clear();
                             RecordPassword = false;
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -188,15 +207,13 @@ public class LoginActivity extends AppCompatActivity {
                             result = synthesizer.SpeakText(introductionText);
                             result.close();
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else {
+                        } else {
                             if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
                                 s = s.substring(0, s.length() - 1);
                             }
                             pwInput.add(s.toLowerCase());
                         }
-                    }
-                    else if (RecordEmail) {
+                    } else if (RecordEmail) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < emailInput.size(); i++) {
                                 emailAddress += emailInput.get(i).replace(" ", "");
@@ -211,8 +228,7 @@ public class LoginActivity extends AppCompatActivity {
 
                             RecordEmail = false;
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -220,8 +236,7 @@ public class LoginActivity extends AppCompatActivity {
                             result = synthesizer.SpeakText(introductionText);
                             result.close();
                             reco.startContinuousRecognitionAsync();
-                        }
-                        else {
+                        } else {
                             if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
                                 s = s.substring(0, s.length() - 1);
                             }
@@ -300,8 +315,7 @@ public class LoginActivity extends AppCompatActivity {
             editor.apply();
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
-        }
-        else {
+        } else {
             String errorText = "Login failed! Please try again! ";
             SpeechSynthesisResult res = synthesizer.SpeakText(errorText);
             res.close();
