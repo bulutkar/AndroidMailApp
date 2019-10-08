@@ -49,7 +49,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private boolean RecordEmail;
     private boolean RecordPassword;
-    private boolean onLaunch;
     private List<String> emailInput;
     private List<String> pwInput;
     private String emailAddress;
@@ -70,9 +69,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordTextView = findViewById(R.id.inputPassword);
 
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        assert(speechConfig != null);
         synthesizer = new SpeechSynthesizer(speechConfig);
-        assert(synthesizer != null);
 
         introductionText = "Welcome to the mail app!";
         introductionText += "You can use start, begin or enter keywords to fill email and password field. For example start email keyword will begin to listen your email address. ";
@@ -83,14 +80,11 @@ public class LoginActivity extends AppCompatActivity {
 
         RecordEmail = false;
         RecordPassword = false;
-        onLaunch = true;
         emailAddress = "";
         password = "";
         emailInput = new ArrayList<String>();
         pwInput = new ArrayList<String>();
-        /*
-        * Add Login failed Text-to-speech
-        * */
+        
         if (!userMail.equals("empty") && !userPassword.equals(" ")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
             emailTextView.setText(userMail);
@@ -140,7 +134,6 @@ public class LoginActivity extends AppCompatActivity {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Recording email now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             RecordEmail = true;
@@ -152,7 +145,6 @@ public class LoginActivity extends AppCompatActivity {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Recording password now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             RecordPassword = true;
@@ -162,11 +154,9 @@ public class LoginActivity extends AppCompatActivity {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             result = synthesizer.SpeakText(introductionText);
-                            assert result != null;
                             result.close();
                             reco.startContinuousRecognitionAsync();
                         }
@@ -181,7 +171,6 @@ public class LoginActivity extends AppCompatActivity {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Password recorded";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             pwInput.clear();
@@ -194,11 +183,9 @@ public class LoginActivity extends AppCompatActivity {
 
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             result = synthesizer.SpeakText(introductionText);
-                            assert result != null;
                             result.close();
                             reco.startContinuousRecognitionAsync();
                         }
@@ -219,7 +206,6 @@ public class LoginActivity extends AppCompatActivity {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Email recorded";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             emailInput.clear();
@@ -232,11 +218,9 @@ public class LoginActivity extends AppCompatActivity {
 
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            assert (result != null);
                             result.close();
 
                             result = synthesizer.SpeakText(introductionText);
-                            assert result != null;
                             result.close();
                             reco.startContinuousRecognitionAsync();
                         }
@@ -252,9 +236,7 @@ public class LoginActivity extends AppCompatActivity {
                         //Button login = findViewById(R.id.buttonLogin);
                         String speakText = "Logging in now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        assert result != null;
                         result.close();
-
                         synthesizer.close();
                         speechConfig.close();
 
@@ -319,6 +301,11 @@ public class LoginActivity extends AppCompatActivity {
             editor.apply();
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
+        }
+        else {
+            String errorText = "Login failed! Please try again! ";
+            SpeechSynthesisResult res = synthesizer.SpeakText(errorText);
+            res.close();
         }
     }
 

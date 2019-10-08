@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
 
-    private boolean onLaunch;
     private String introductionText;
 
     @Override
@@ -48,11 +47,8 @@ public class MainActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
 
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        assert(speechConfig != null);
         synthesizer = new SpeechSynthesizer(speechConfig);
-        assert(synthesizer != null);
 
-        onLaunch = true;
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
@@ -71,10 +67,14 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> content = new ArrayList<>();
 
         try {
-            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
+            Future<SpeechSynthesisResult> speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
+            synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
+                e.close();
+                speechSynthesisResult.cancel(true);
+            });
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
@@ -82,26 +82,27 @@ public class MainActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
-                if (comparedText.equals("start message") || comparedText.equals("new message") || comparedText.equals("start new message") || comparedText.equals("create message")
-                        || comparedText.equals("start email") || comparedText.equals("new email") || comparedText.equals("start new email") || comparedText.equals("create email")) {
-                    reco.stopContinuousRecognitionAsync();
-                    Intent intent = new Intent(this, SendMailActivity.class);
-                    startActivity(intent);
+                if (speechSynthesisResult.isCancelled()) {
+                    if (comparedText.equals("start message") || comparedText.equals("new message") || comparedText.equals("start new message") || comparedText.equals("create message")
+                            || comparedText.equals("start email") || comparedText.equals("new email") || comparedText.equals("start new email") || comparedText.equals("create email")) {
+                        reco.stopContinuousRecognitionAsync();
+                        Intent intent = new Intent(this, SendMailActivity.class);
+                        startActivity(intent);
 
+                    }
+                    else if (comparedText.equals("logout") || comparedText.equals("log out")) {
+                        reco.stopContinuousRecognitionAsync();
+                        logoutButton.callOnClick();
+                    }
+                    else if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
+                        reco.stopContinuousRecognitionAsync();
+                        SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
+                        result.close();
+                        result = synthesizer.SpeakText(introductionText);
+                        result.close();
+                        reco.startContinuousRecognitionAsync();
+                    }
                 }
-                else if (comparedText.equals("logout") || comparedText.equals("log out")) {
-                    reco.stopContinuousRecognitionAsync();
-                    logoutButton.callOnClick();
-                }
-                else if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
-                    reco.stopContinuousRecognitionAsync();
-                    SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
-                    result.close();
-                    result = synthesizer.SpeakText(introductionText);
-                    result.close();
-                    reco.startContinuousRecognitionAsync();
-                }
-
                 content.add(s);
             });
 
