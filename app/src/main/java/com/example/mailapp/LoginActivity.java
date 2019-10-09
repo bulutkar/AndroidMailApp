@@ -156,7 +156,8 @@ public class LoginActivity extends AppCompatActivity {
                 if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
                         || comparedText.equals("quit application") || comparedText.equals("exit application")
                         || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
-                    finishAndRemoveTask();
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                    System.exit(1);
                 }
                 if (isSpeakStop) {
                     if (!RecordPassword && !RecordEmail) {
