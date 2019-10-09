@@ -1,6 +1,5 @@
 package com.example.mailapp;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -23,6 +22,7 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
     private Button loginButton;
     private TextView emailTextView;
     private TextView passwordTextView;
-    private ProgressDialog progressDialog;
 
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
@@ -56,6 +55,8 @@ public class LoginActivity extends AppCompatActivity {
     private String password;
     private String introductionText;
     private boolean isSpeakStop;
+    Future<SpeechSynthesisResult> speechSynthesisResult;
+    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,11 +105,15 @@ public class LoginActivity extends AppCompatActivity {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
             recognizedTextView.setText("Could not initialize: " + ex.toString());
         }
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.i("OnStart", "OnStart called.");
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "reco 3";
-        AudioConfig audioInput;
         ArrayList<String> content = new ArrayList<>();
         clearTextBox();
 
@@ -119,7 +124,6 @@ public class LoginActivity extends AppCompatActivity {
 
             sharedPreferences2 = getSharedPreferences("IntroSpeaksLogin", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
-            Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
@@ -131,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
                     editor.apply();
                 });
             } else {
-                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                speechSynthesisResult = synthesizer.StartSpeakingTextAsync("Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);
@@ -268,7 +272,44 @@ public class LoginActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
             displayException(ex);
         }
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("OnResume", "OnResume called.");
+        try {
+            reco.startContinuousRecognitionAsync();
+        } catch (Exception exp) {
+            Log.e("OnResume exception:", exp.getMessage().toString());
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.i("OnPause", "OnPause called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
+        }
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.i("OnStop", "OnStop called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
     }
 
     public SpeechConfig createSpeechConfig(String key, String region) {
@@ -364,12 +405,6 @@ public class LoginActivity extends AppCompatActivity {
     private void enableButtons() {
         LoginActivity.this.runOnUiThread(() -> {
 
-        });
-    }
-
-    private void changeProgressDialogText(String text) {
-        LoginActivity.this.runOnUiThread(() -> {
-            progressDialog.setMessage(text);
         });
     }
 

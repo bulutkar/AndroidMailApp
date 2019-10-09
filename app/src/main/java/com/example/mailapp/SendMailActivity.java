@@ -21,6 +21,7 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 import javax.mail.AuthenticationFailedException;
@@ -65,6 +66,8 @@ public class SendMailActivity extends AppCompatActivity {
     private List<String> SubjectInput;
     private List<String> BodyInput;
     private boolean isSpeakStop;
+    Future<SpeechSynthesisResult> speechSynthesisResult;
+    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,11 +109,14 @@ public class SendMailActivity extends AppCompatActivity {
         } catch (Exception ex) {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
         }
+    }
+    @Override
+    public void onStart(){
+        super.onStart();
 
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "reco 3";
-        AudioConfig audioInput;
         ArrayList<String> content = new ArrayList<>();
 
         try {
@@ -119,7 +125,6 @@ public class SendMailActivity extends AppCompatActivity {
             reco = new SpeechRecognizer(speechConfig, audioInput);
             sharedPreferences2 = getSharedPreferences("IntroSpeaksSendMail", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
-            Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
@@ -281,7 +286,39 @@ public class SendMailActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
         }
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("OnResume", "OnResume called.");
+        try {
+            reco.startContinuousRecognitionAsync();
+        } catch (Exception exp) {
+            Log.e("OnResume exception:", exp.getMessage().toString());
+        }
+    }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.i("OnPause", "OnPause called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
+        }
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.i("OnStop", "OnStop called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
+        }
+    }
     public boolean onClickMail(View view) {
         fromEmail = email_from.getText().toString();
         toEmail = email_to.getText().toString();
@@ -366,5 +403,8 @@ public class SendMailActivity extends AppCompatActivity {
                 return false;
             }
         }
+    }
+    @Override
+    public void onBackPressed() {
     }
 }

@@ -4,13 +4,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.text.Spanned;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -24,6 +24,7 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 import javax.mail.BodyPart;
@@ -62,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Spanned> inboxHtml;
     private List<String> inboxPlainText;
     private List<String> inboxHeader;
+    Future<SpeechSynthesisResult> speechSynthesisResult;
+    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +89,14 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ex) {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
         }
+    }
+    @Override
+    public void onStart(){
+        super.onStart();
 
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "reco 3";
-        AudioConfig audioInput;
         ArrayList<String> content = new ArrayList<>();
 
         inboxHtml = new ArrayList<Spanned>();
@@ -114,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
             reco = new SpeechRecognizer(speechConfig, audioInput);
             sharedPreferences2 = getSharedPreferences("IntroSpeaksMain", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
-            Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
@@ -185,7 +190,39 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
         }
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i("OnResume", "OnResume called.");
+        try {
+            reco.startContinuousRecognitionAsync();
+        } catch (Exception exp) {
+            Log.e("OnResume exception:", exp.getMessage().toString());
+        }
+    }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.i("OnPause", "OnPause called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
+        }
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.i("OnStop", "OnStop called.");
+        try {
+            reco.stopContinuousRecognitionAsync();
+        } catch (Exception e) {
+            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
+        }
+    }
     public void writeNewMail(View view) {
         reco.stopContinuousRecognitionAsync();
         synthesizer.close();
@@ -279,5 +316,8 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         }
+    }
+    @Override
+    public void onBackPressed() {
     }
 }
