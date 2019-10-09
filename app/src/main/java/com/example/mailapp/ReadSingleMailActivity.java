@@ -1,12 +1,15 @@
 package com.example.mailapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import javax.mail.Address;
 import javax.mail.Message;
@@ -19,10 +22,12 @@ public class ReadSingleMailActivity extends AppCompatActivity {
     private TextView MailBody;
     private TextView MailSubject;
     private TextView MailFrom;
+    private Button back_button;
 
     private String Subject;
     private Address[] From;
     private String Body;
+    private boolean isSpeakStop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +37,9 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         MailBody = findViewById(R.id.mailBody);
         MailSubject = findViewById(R.id.mailSubject);
         MailFrom = findViewById(R.id.mailFrom);
+        back_button = findViewById(R.id.back_button);
+
+        isSpeakStop = true; // change to false when voice add
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -60,7 +68,18 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         }
     }
 
+    public void onBack(View view) {
+        if (!isSpeakStop) return;
+        /*microphoneStream.close();
+        synthesizer.close(); // Remove the comments when voice command app
+        reco.stopContinuousRecognitionAsync();*/
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent); // change later
+    }
 
+    @Override
+    public void onBackPressed() {
+    }
 
     private void changeTextView(TextView textView, String text) {
         ReadSingleMailActivity.this.runOnUiThread(() -> {
@@ -72,6 +91,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         private MailChecker mailChecker;
         private Message[] allMessages;
         private int messageCount;
+
         public ReadSingleMailAsyncTask() {
             try {
                 mailChecker = new MailChecker(sharedPreferences.getString("Email", "empty"), sharedPreferences.getString("Password", " "));
@@ -101,8 +121,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                 int count = mp.getCount();
                 for (int i = 0; i < count; i++)
                     GetEmailBody(mp.getBodyPart(i));
-            }
-            else if (p.isMimeType("text/plain")) {
+            } else if (p.isMimeType("text/plain")) {
                 Body = p.getContent().toString();
             }
         }

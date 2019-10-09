@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,7 +22,6 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
 import javax.mail.AuthenticationFailedException;
@@ -40,6 +40,7 @@ public class SendMailActivity extends AppCompatActivity {
     private TextView email_subject;
     private TextView email_body;
     private ImageButton send_button;
+    private Button back_button;
 
     private String fromEmail;
     private String toEmail;
@@ -79,6 +80,7 @@ public class SendMailActivity extends AppCompatActivity {
         email_subject = findViewById(R.id.email_subject);
         email_body = findViewById(R.id.email_body);
         send_button = findViewById(R.id.email_send_button);
+        back_button = findViewById(R.id.back_button);
 
         sharedPreferences = getSharedPreferences("LoginInfo", 0);
         userMail = sharedPreferences.getString("Email", "");
@@ -98,7 +100,7 @@ public class SendMailActivity extends AppCompatActivity {
         RecordBody = false;
         RecordReceiver = false;
         RecordSubject = false;
-
+        isSpeakStop = false;
         ReceiverInput = new ArrayList<String>();
         SubjectInput = new ArrayList<String>();
         BodyInput = new ArrayList<String>();
@@ -109,20 +111,9 @@ public class SendMailActivity extends AppCompatActivity {
         } catch (Exception ex) {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
         }
-    }
-    @Override
-    public void onStart(){
-        super.onStart();
-
-        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        synthesizer = new SpeechSynthesizer(speechConfig);
-        final String logTag = "reco 3";
-        ArrayList<String> content = new ArrayList<>();
-
         try {
-            content.clear();
-            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
-            reco = new SpeechRecognizer(speechConfig, audioInput);
+            speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+            synthesizer = new SpeechSynthesizer(speechConfig);
             sharedPreferences2 = getSharedPreferences("IntroSpeaksSendMail", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             if (!isRead) {
@@ -143,12 +134,36 @@ public class SendMailActivity extends AppCompatActivity {
                     isSpeakStop = true;
                 });
             }
+        } catch (Exception e) {
+            Log.e("MainCreateOnException", e.getMessage());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+        synthesizer = new SpeechSynthesizer(speechConfig);
+        final String logTag = "reco 3";
+        ArrayList<String> content = new ArrayList<>();
+
+        try {
+            content.clear();
+            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
+            reco = new SpeechRecognizer(speechConfig, audioInput);
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
                 Log.i(logTag, "Final result received: " + s);
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
+
+                if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
+                        || comparedText.equals("quit application") || comparedText.equals("exit application")
+                        || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
+                    finishAndRemoveTask();
+                }
 
                 if (isSpeakStop) {
                     if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
@@ -278,6 +293,15 @@ public class SendMailActivity extends AppCompatActivity {
                             reco.startContinuousRecognitionAsync();
                         }
                     }
+                    if (comparedText.equals("discard") || comparedText.equals("back") || comparedText.equals("delete")) {
+                        reco.stopContinuousRecognitionAsync();
+                        String successText = "Email discarded! ";
+                        synthesizer.SpeakText(successText);
+                        synthesizer.close();
+                        speechConfig.close();
+                        microphoneStream.close();
+                        back_button.callOnClick();
+                    }
                 }
                 content.add(s);
             });
@@ -286,40 +310,10 @@ public class SendMailActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
         }
     }
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.i("OnResume", "OnResume called.");
-        try {
-            reco.startContinuousRecognitionAsync();
-        } catch (Exception exp) {
-            Log.e("OnResume exception:", exp.getMessage().toString());
-        }
-    }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.i("OnPause", "OnPause called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
-        }
 
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.i("OnStop", "OnStop called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
-        }
-    }
     public boolean onClickMail(View view) {
+        if (!isSpeakStop) return false;
         fromEmail = email_from.getText().toString();
         toEmail = email_to.getText().toString();
         subject = email_subject.getText().toString();
@@ -339,6 +333,15 @@ public class SendMailActivity extends AppCompatActivity {
             Toast.makeText(this, "Sending Failed. Exception.", Toast.LENGTH_SHORT).show();
             return false;
         }
+    }
+
+    public void onBack(View view) {
+        if (!isSpeakStop) return;
+        microphoneStream.close();
+        synthesizer.close();
+        reco.stopContinuousRecognitionAsync();
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent); // change later
     }
 
     private void changeTextView(TextView textView, String text) {
@@ -404,6 +407,7 @@ public class SendMailActivity extends AppCompatActivity {
             }
         }
     }
+
     @Override
     public void onBackPressed() {
     }

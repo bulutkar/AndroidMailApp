@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,7 +14,6 @@ import android.widget.ListView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.text.HtmlCompat;
 
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
@@ -25,12 +23,9 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
-import javax.mail.BodyPart;
 import javax.mail.Message;
-import javax.mail.Multipart;
 
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
@@ -74,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
         inboxList = findViewById(R.id.listView1);
 
-        isSpeakStop = true;
+        isSpeakStop = false;
 
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
@@ -88,36 +83,9 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ex) {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
         }
-    }
-    @Override
-    public void onStart(){
-        super.onStart();
-        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        synthesizer = new SpeechSynthesizer(speechConfig);
-        final String logTag = "reco 3";
-        ArrayList<String> content = new ArrayList<>();
-
-        inboxHeader = new ArrayList<String>();
         try {
-            boolean result = new ReceiveMailAsyncTask().execute().get();
-            if (result) {
-                ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, inboxHeader);
-                inboxList.setAdapter(dataAdapter);
-            }
-        } catch (Exception ex) {
-            System.out.println(ex.toString());
-        }
-
-        inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
-            Intent intent = new Intent(this, ReadSingleMailActivity.class);
-            intent.putExtra("MAIL_LINE", position);
-            startActivity(intent);
-        });
-
-        try {
-            content.clear();
-            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
-            reco = new SpeechRecognizer(speechConfig, audioInput);
+            speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+            synthesizer = new SpeechSynthesizer(speechConfig);
             sharedPreferences2 = getSharedPreferences("IntroSpeaksMain", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             if (!isRead) {
@@ -138,6 +106,43 @@ public class MainActivity extends AppCompatActivity {
                     isSpeakStop = true;
                 });
             }
+        } catch (Exception e) {
+            Log.e("MainCreateOnException", e.getMessage());
+        }
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        final String logTag = "reco 3";
+        ArrayList<String> content = new ArrayList<>();
+
+        inboxHeader = new ArrayList<String>();
+        try {
+            boolean result = new ReceiveMailAsyncTask().execute().get();
+            if (result) {
+                ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, inboxHeader);
+                inboxList.setAdapter(dataAdapter);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+
+        inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
+            if (!isSpeakStop) return;
+            microphoneStream.close();
+            synthesizer.close();
+            reco.stopContinuousRecognitionAsync();
+            Intent intent = new Intent(this, ReadSingleMailActivity.class);
+            intent.putExtra("MAIL_LINE", position);
+            startActivity(intent);
+        });
+
+        try {
+            content.clear();
+            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
+            reco = new SpeechRecognizer(speechConfig, audioInput);
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
@@ -145,6 +150,11 @@ public class MainActivity extends AppCompatActivity {
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
 
+                if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
+                        || comparedText.equals("quit application") || comparedText.equals("exit application")
+                        || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
+                    finishAndRemoveTask();
+                }
                 if (isSpeakStop) {
                     switch (comparedText) {
                         case "start message":
@@ -190,40 +200,9 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
         }
     }
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.i("OnResume", "OnResume called.");
-        try {
-            reco.startContinuousRecognitionAsync();
-        } catch (Exception exp) {
-            Log.e("OnResume exception:", exp.getMessage().toString());
-        }
-    }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.i("OnPause", "OnPause called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
-        }
-
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.i("OnStop", "OnStop called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
-        }
-    }
     public void writeNewMail(View view) {
+        if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
         synthesizer.close();
         microphoneStream.close();
@@ -232,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logOut(View view) {
+        if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
         synthesizer.close();
         microphoneStream.close();
@@ -287,8 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = messageCount - 1; i >= 0; i--) {
                     if (allMessages[i].getSubject() == null) {
                         inboxHeader.add("empty subject");
-                    }
-                    else {
+                    } else {
                         inboxHeader.add(allMessages[i].getSubject());
                     }
                     /*Object content = allMessages[i].getContent();

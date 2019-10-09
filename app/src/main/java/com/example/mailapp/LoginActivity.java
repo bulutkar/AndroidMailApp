@@ -22,7 +22,6 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,6 +74,7 @@ public class LoginActivity extends AppCompatActivity {
         introductionText += "You can use start, begin or enter keywords to fill email and password field. For example start email keyword will begin to listen your email address. ";
         introductionText += "When you finish telling your input, you can use stop or end keyword to finish listening. ";
         introductionText += "When you finish entering email address and password fields. You can use login keyword to enter your email account. ";
+        introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
         introductionText += "If you want to listen this introduction part again. You can use repeat commands keyword to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
@@ -105,23 +105,9 @@ public class LoginActivity extends AppCompatActivity {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
             recognizedTextView.setText("Could not initialize: " + ex.toString());
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Log.i("OnStart", "OnStart called.");
-        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
-        synthesizer = new SpeechSynthesizer(speechConfig);
-        final String logTag = "reco 3";
-        ArrayList<String> content = new ArrayList<>();
-        clearTextBox();
-
         try {
-            content.clear();
-            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
-            reco = new SpeechRecognizer(speechConfig, audioInput);
-
+            speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+            synthesizer = new SpeechSynthesizer(speechConfig);
             sharedPreferences2 = getSharedPreferences("IntroSpeaksLogin", 0);
             boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             if (!isRead) {
@@ -142,13 +128,36 @@ public class LoginActivity extends AppCompatActivity {
                     isSpeakStop = true;
                 });
             }
+        } catch (Exception e) {
+            Log.e("LoginOnCreateException:", e.getMessage());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.i("OnStart", "OnStart called.");
+        speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
+        synthesizer = new SpeechSynthesizer(speechConfig);
+        final String logTag = "reco 3";
+        ArrayList<String> content = new ArrayList<>();
+        clearTextBox();
+
+        try {
+            content.clear();
+            audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
+            reco = new SpeechRecognizer(speechConfig, audioInput);
 
             reco.recognized.addEventListener((o, speechRecognitionResultEventArgs) -> {
                 String s = speechRecognitionResultEventArgs.getResult().getText();
                 Log.i(logTag, "Final result received: " + s);
                 String[] splitedText = s.split("\\.");
                 String comparedText = splitedText[0].toLowerCase();
-
+                if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
+                        || comparedText.equals("quit application") || comparedText.equals("exit application")
+                        || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
+                    finishAndRemoveTask();
+                }
                 if (isSpeakStop) {
                     if (!RecordPassword && !RecordEmail) {
                         switch (comparedText) {
@@ -250,7 +259,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
 
                     if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
-                        //Button login = findViewById(R.id.buttonLogin);
+                        if (!isSpeakStop) return;
                         String speakText = "Logging in now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         result.close();
@@ -274,39 +283,6 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.i("OnResume", "OnResume called.");
-        try {
-            reco.startContinuousRecognitionAsync();
-        } catch (Exception exp) {
-            Log.e("OnResume exception:", exp.getMessage().toString());
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.i("OnPause", "OnPause called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onPause exception", Objects.requireNonNull(e.getMessage()));
-        }
-
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.i("OnStop", "OnStop called.");
-        try {
-            reco.stopContinuousRecognitionAsync();
-        } catch (Exception e) {
-            Log.e("onStop exception", Objects.requireNonNull(e.getMessage()));
-        }
-    }
 
     @Override
     public void onBackPressed() {
@@ -350,6 +326,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLogin(View view) {
         Boolean result = tryLogin();
+        if (!isSpeakStop) return;
         if (result) {
             reco.stopContinuousRecognitionAsync();
             synthesizer.close();
