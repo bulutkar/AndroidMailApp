@@ -31,8 +31,8 @@ import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class SendMailActivity extends AppCompatActivity {
-    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
-    private static final String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
+    private static final String SpeechRegion = "westus";
 
     private TextView email_from;
     private TextView email_to;
@@ -48,6 +48,7 @@ public class SendMailActivity extends AppCompatActivity {
     private String password;
 
     SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferences2;
     private String userMail;
     private String userPassword;
 
@@ -116,8 +117,8 @@ public class SendMailActivity extends AppCompatActivity {
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-            sharedPreferences = getSharedPreferences("IntroSpeaksSendMail", 0);
-            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            sharedPreferences2 = getSharedPreferences("IntroSpeaksSendMail", 0);
+            boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
@@ -125,8 +126,8 @@ public class SendMailActivity extends AppCompatActivity {
                     e.close();
                     speechSynthesisResult.cancel(true);
                     isSpeakStop = true;
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putBoolean("IntroSpeaksSendMail", true);
+                    SharedPreferences.Editor editor = sharedPreferences2.edit();
+                    editor.putBoolean("isRead", true);
                     editor.apply();
                 });
             } else {

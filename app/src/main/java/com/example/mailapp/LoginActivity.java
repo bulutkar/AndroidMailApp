@@ -32,8 +32,8 @@ import static android.Manifest.permission.RECORD_AUDIO;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
-    private static final String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
+    private static final String SpeechRegion = "westus";
 
     private TextView recognizedTextView;
     private Button loginButton;
@@ -44,6 +44,7 @@ public class LoginActivity extends AppCompatActivity {
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
     private SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferences2;
     private SpeechConfig speechConfig;
     private SpeechSynthesizer synthesizer;
 
@@ -84,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
         pwInput = new ArrayList<String>();
         isSpeakStop = false;
 
-        if (!userMail.equals("empty") && !userPassword.equals(" ")) {
+        if (!userMail.equals("empty") && !userPassword.equals(" ") && !userPassword.equals("") && userMail.contains("@")) {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
             emailTextView.setText(userMail);
             passwordTextView.setText(userPassword);
@@ -116,8 +117,8 @@ public class LoginActivity extends AppCompatActivity {
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
 
-            sharedPreferences = getSharedPreferences("IntroSpeaksLogin", 0);
-            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            sharedPreferences2 = getSharedPreferences("IntroSpeaksLogin", 0);
+            boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
@@ -125,8 +126,8 @@ public class LoginActivity extends AppCompatActivity {
                     e.close();
                     speechSynthesisResult.cancel(true);
                     isSpeakStop = true;
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putBoolean("IntroSpeaksLogin", true);
+                    SharedPreferences.Editor editor = sharedPreferences2.edit();
+                    editor.putBoolean("isRead", true);
                     editor.apply();
                 });
             } else {
@@ -294,7 +295,8 @@ public class LoginActivity extends AppCompatActivity {
     private boolean tryLogin() {
         emailAddress = emailTextView.getText().toString();
         password = passwordTextView.getText().toString();
-        if (emailAddress.isEmpty() || password.isEmpty()) return false;
+        if (emailAddress.isEmpty() || password.isEmpty() || !emailAddress.contains("@"))
+            return false;
         MailChecker checker = new MailChecker(emailAddress, password);
         Boolean result = false;
         try {

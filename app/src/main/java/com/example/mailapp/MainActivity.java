@@ -44,10 +44,11 @@ import static android.Manifest.permission.RECORD_AUDIO;
 }*/
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
-    private static final String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
+    private static final String SpeechRegion = "westus";
 
     private SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferences2;
     private ImageButton newMailButton;
     private Button logoutButton;
     private ListView inboxList;
@@ -111,8 +112,8 @@ public class MainActivity extends AppCompatActivity {
             content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
-            sharedPreferences = getSharedPreferences("IntroSpeaksMain", 0);
-            boolean isRead = sharedPreferences.getBoolean("isRead", false);
+            sharedPreferences2 = getSharedPreferences("IntroSpeaksMain", 0);
+            boolean isRead = sharedPreferences2.getBoolean("isRead", false);
             Future<SpeechSynthesisResult> speechSynthesisResult;
             if (!isRead) {
                 speechSynthesisResult = synthesizer.SpeakTextAsync(introductionText);
@@ -120,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
                     e.close();
                     speechSynthesisResult.cancel(true);
                     isSpeakStop = true;
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putBoolean("IntroSpeaksMain", true);
+                    SharedPreferences.Editor editor = sharedPreferences2.edit();
+                    editor.putBoolean("isRead", true);
                     editor.apply();
                 });
             } else {
