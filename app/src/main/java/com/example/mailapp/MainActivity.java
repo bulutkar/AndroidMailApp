@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -60,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
     private SpeechRecognizer reco;
     private boolean isSpeakStop;
     private String introductionText;
-    private List<Spanned> inboxHtml;
-    private List<String> inboxPlainText;
     private List<String> inboxHeader;
     Future<SpeechSynthesisResult> speechSynthesisResult;
     AudioConfig audioInput;
@@ -93,26 +92,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart(){
         super.onStart();
-
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "reco 3";
         ArrayList<String> content = new ArrayList<>();
 
-        inboxHtml = new ArrayList<Spanned>();
-        inboxPlainText = new ArrayList<String>();
         inboxHeader = new ArrayList<String>();
         try {
             boolean result = new ReceiveMailAsyncTask().execute().get();
             if (result) {
                 ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, inboxHeader);
                 inboxList.setAdapter(dataAdapter);
-                /*ArrayAdapter<Spanned> dataAdapter2 = new ArrayAdapter<Spanned>(this, android.R.layout.simple_list_item_2, android.R.id.text2, inboxHtml);
-                inboxList.setAdapter(dataAdapter2);*/
             }
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
+
+        inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
+            Intent intent = new Intent(this, ReadSingleMailActivity.class);
+            intent.putExtra("MAIL_LINE", position);
+            startActivity(intent);
+        });
 
         try {
             content.clear();
@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.apply();
                 });
             } else {
-                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in main page! Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);
@@ -284,9 +284,14 @@ public class MainActivity extends AppCompatActivity {
                 mailChecker.login();
                 allMessages = mailChecker.getMessages();
                 messageCount = mailChecker.getMessageCount();
-                for (int i = 0; i < messageCount; i++) {
-                    Object content = allMessages[i].getContent();
-                    inboxHeader.add(allMessages[i].getSubject());
+                for (int i = messageCount - 1; i >= 0; i--) {
+                    if (allMessages[i].getSubject() == null) {
+                        inboxHeader.add("empty subject");
+                    }
+                    else {
+                        inboxHeader.add(allMessages[i].getSubject());
+                    }
+                    /*Object content = allMessages[i].getContent();
                     if (content instanceof String) {
                         String email = (String)content;
                         inboxPlainText.add(email);
@@ -308,8 +313,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                    }
-
+                    }*/
                 }
                 return true;
             } catch (Exception ex) {
@@ -317,6 +321,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     @Override
     public void onBackPressed() {
     }

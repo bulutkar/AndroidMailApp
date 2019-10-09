@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
                     editor.apply();
                 });
             } else {
-                speechSynthesisResult = synthesizer.StartSpeakingTextAsync("Listening your commands now!");
+                speechSynthesisResult = synthesizer.StartSpeakingTextAsync("You are in login page! Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);

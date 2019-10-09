@@ -136,7 +136,7 @@ public class SendMailActivity extends AppCompatActivity {
                     editor.apply();
                 });
             } else {
-                speechSynthesisResult = synthesizer.SpeakTextAsync("Listening your commands now!");
+                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in send mail page! Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);

@@ -9,6 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".ReadSingleMailActivity"></activity>
         <activity android:name=".PermissionRequestActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +22,7 @@
             android:name=".ui.login.LoginActivity2"
             android:label="@string/title_activity_login2" />
         <activity android:name=".SendMailActivity" />
-        <activity android:name=".LoginActivity">
-        </activity>
+        <activity android:name=".LoginActivity"></activity>
     </application>
 
 </manifest>
