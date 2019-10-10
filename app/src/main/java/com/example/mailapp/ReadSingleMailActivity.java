@@ -103,7 +103,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                 });
             }
             else {
-                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in main page! Listening your commands now!");
+                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in read single mail page! Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);
@@ -154,6 +154,9 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                         case "read sender":
                         case "tell sender":
                         case "say sender":
+                        case "read from":
+                        case "tell from":
+                        case "say from":
                             reco.stopContinuousRecognitionAsync();
                             synthesizer.SpeakText(From[0].toString());
                             reco.startContinuousRecognitionAsync();
