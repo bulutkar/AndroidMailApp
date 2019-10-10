@@ -414,5 +414,11 @@ public class SendMailActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if (!isSpeakStop) return;
+        microphoneStream.close();
+        synthesizer.close();
+        reco.stopContinuousRecognitionAsync();
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent); // change later
     }
 }

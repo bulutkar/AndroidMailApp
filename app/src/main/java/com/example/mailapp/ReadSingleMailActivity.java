@@ -237,6 +237,12 @@ public class ReadSingleMailActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if (!isSpeakStop) return;
+        microphoneStream.close();
+        synthesizer.close();
+        reco.stopContinuousRecognitionAsync();
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent); // change later
     }
 
     private void changeTextView(TextView textView, String text) {

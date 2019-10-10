@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
+        introductionText += "You can listen the subject and sender information of last mail you received by saying play last mail, say last mail, tell last mail, read last mail keywords. ";
         introductionText += "If you want to listen this introduction part again, you can use repeat commands keyword to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
@@ -191,6 +192,14 @@ public class MainActivity extends AppCompatActivity {
                             result.close();
                             reco.startContinuousRecognitionAsync();
                             break;
+                        case "play last mail":
+                        case "say last mail":
+                        case "tell last mail":
+                        case "read last mail":
+                            reco.stopContinuousRecognitionAsync();
+                            synthesizer.SpeakText(inboxHeader.get(0)); // check for correctness, emulator does not have mic
+                            reco.startContinuousRecognitionAsync();
+                            break;
                     }
                 }
                 content.add(s);
@@ -267,10 +276,15 @@ public class MainActivity extends AppCompatActivity {
                 allMessages = mailChecker.getMessages();
                 messageCount = mailChecker.getMessageCount();
                 for (int i = messageCount - 1; i >= 0; i--) {
+                    String Header = "From: ";
+                    Header += allMessages[i].getFrom()[0].toString();
+                    Header += "\r\nSubject: ";
                     if (allMessages[i].getSubject() == null) {
-                        inboxHeader.add("empty subject");
+                        Header += "empty subject";
+                        inboxHeader.add(Header);
                     } else {
-                        inboxHeader.add(allMessages[i].getSubject());
+                        Header += allMessages[i].getSubject();
+                        inboxHeader.add(Header);
                     }
                 }
                 return true;
