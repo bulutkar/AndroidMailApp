@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.text.HtmlCompat;
 
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
@@ -73,6 +74,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         introductionText = "Welcome to read single mail page! ";
         introductionText += "You can use read, tell or say keywords to hear mail's sender, subject and body. ";
         introductionText += "For example read subject will tell you the subject of the mail. ";
+        introductionText += "You can use go back keyword to return to main screen. ";
         introductionText += "If you want to listen this introduction part again, you can use repeat commands keyword to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
@@ -280,6 +282,8 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         }
 
         public void GetEmailBody(Part p) throws Exception {
+            String sa = p.getContentType();
+            sa = sa;
             if (p.isMimeType("multipart/*")) {
                 Multipart mp = (Multipart) p.getContent();
                 int count = mp.getCount();
@@ -287,7 +291,9 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                     GetEmailBody(mp.getBodyPart(i));
             } else if (p.isMimeType("text/plain")) {
                 Body = p.getContent().toString();
-            }
+            } /*else if (p.isMimeType("text/html")) {
+                Body = HtmlCompat.fromHtml(p.getContent().toString(), 0).toString();
+            }*/ // discuss
         }
     }
 }

@@ -278,21 +278,8 @@ public class SendMailActivity extends AppCompatActivity {
 
                     if (comparedText.equals("send") || comparedText.equals("deliver") || comparedText.equals("sent")) {
                         reco.stopContinuousRecognitionAsync();
-                        if (send_button.callOnClick()) {
-                            String successText = "Email sent successfully! ";
-                            synthesizer.SpeakText(successText);
-                            synthesizer.close();
-                            speechConfig.close();
-                            microphoneStream.close();
-                            if (!speechSynthesisResult.isCancelled())
-                                speechSynthesisResult.cancel(true);
-                            Intent intent = new Intent(this, MainActivity.class);
-                            startActivity(intent); // change later
-                        } else {
-                            String errorText = "Send email request failed! ";
-                            synthesizer.SpeakText(errorText);
-                            reco.startContinuousRecognitionAsync();
-                        }
+                        send_button.callOnClick();
+                        reco.startContinuousRecognitionAsync();
                     }
                     if (comparedText.equals("discard") || comparedText.equals("back") || comparedText.equals("delete")) {
                         reco.stopContinuousRecognitionAsync();
@@ -313,29 +300,33 @@ public class SendMailActivity extends AppCompatActivity {
     }
 
 
-    public boolean onClickMail(View view) {
-        if (!isSpeakStop) return false;
+    public void onClickMail(View view) {
+        if (!isSpeakStop) return;
         fromEmail = email_from.getText().toString();
         toEmail = email_to.getText().toString();
         subject = email_subject.getText().toString();
         body = email_body.getText().toString();
         user = fromEmail; //change later. // trymyappfortest@gmail.com pw. A987654321
-        Boolean result = false;
+        Boolean result;
         try {
             result = new SendEmailAsyncTask().execute().get();
             if (result) {
                 Toast.makeText(this, "Mail Sent.", Toast.LENGTH_SHORT).show();
-                synthesizer.SpeakText("Mail sent. ");
-                return true; // change activity when sending mail with actual button click
+                synthesizer.SpeakText("Mail sent successfully. ");
+                synthesizer.close();
+                speechConfig.close();
+                microphoneStream.close();
+                if (!speechSynthesisResult.isCancelled())
+                    speechSynthesisResult.cancel(true);
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent); // change later
             } else {
                 Toast.makeText(this, "Sending Failed.", Toast.LENGTH_SHORT).show();
                 synthesizer.SpeakText("Sending failed. ");
-                return false;
             }
         } catch (Exception e) {
             Toast.makeText(this, "Sending Failed. Exception.", Toast.LENGTH_SHORT).show();
             synthesizer.SpeakText("Sending failed. ");
-            return false;
         }
     }
 
