@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import javax.mail.Message;
+import javax.mail.Multipart;
+import javax.mail.Part;
 
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean isSpeakStop;
     private String introductionText;
     private List<String> inboxHeader;
+    private String Body;
+    private List<String> Bodies;
+    private int messageCounts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,10 +78,12 @@ public class MainActivity extends AppCompatActivity {
         isSpeakStop = false;
 
         introductionText = "Welcome to the main page! ";
-        introductionText += "You can use start mail, new mail, start new mail or create mail keywords to send e new mail. ";
+        introductionText += "You can use start email, new email, start new email, create email keywords to send a new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
-        introductionText += "You can listen the subject and sender information of last mail you received by saying play last mail, say last mail, tell last mail, read last mail keywords. ";
-        introductionText += "If you want to listen this introduction part again, you can use repeat commands keyword to replay introduction. ";
+        introductionText += "You can listen the subject, sender and body information of last mail you received by saying play last email, say last email, tell last email, read last email keywords. ";
+        introductionText += "You can listen the subject and sender information of all mails you received by saying play all emails, say all emails, tell all emails, read all emails keywords. ";
+        introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
+        introductionText += "If you want to listen this introduction part again, you can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
         try {
@@ -111,16 +118,11 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("MainCreateOnException", e.getMessage());
         }
-
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        final String logTag = "reco 3";
+        final String logTag = "Main reco 3";
         ArrayList<String> content = new ArrayList<>();
 
         inboxHeader = new ArrayList<String>();
+        Bodies = new ArrayList<String>();
         try {
             boolean result = new ReceiveMailAsyncTask().execute().get();
             if (result) {
@@ -133,9 +135,9 @@ public class MainActivity extends AppCompatActivity {
 
         inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
             if (!isSpeakStop) return;
-            microphoneStream.close();
-            synthesizer.close();
             reco.stopContinuousRecognitionAsync();
+            synthesizer.close();
+            microphoneStream.close();
             Intent intent = new Intent(this, ReadSingleMailActivity.class);
             intent.putExtra("MAIL_LINE", position);
             startActivity(intent);
@@ -155,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
                         || comparedText.equals("quit application") || comparedText.equals("exit application")
                         || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
-                    android.os.Process.killProcess(android.os.Process.myPid());
+                    finishAffinity();
                     System.exit(1);
                 }
                 if (isSpeakStop) {
@@ -185,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case "repeat command":
                         case "repeat commands":
+                        case "help":
                             reco.stopContinuousRecognitionAsync();
                             SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
                             result.close();
@@ -192,12 +195,26 @@ public class MainActivity extends AppCompatActivity {
                             result.close();
                             reco.startContinuousRecognitionAsync();
                             break;
-                        case "play last mail":
-                        case "say last mail":
-                        case "tell last mail":
-                        case "read last mail":
+                        case "play last email":
+                        case "say last email":
+                        case "tell last email":
+                        case "read last email":
+                            if (messageCounts < 1) break;
                             reco.stopContinuousRecognitionAsync();
-                            synthesizer.SpeakText(inboxHeader.get(0)); // check for correctness, emulator does not have mic
+                            synthesizer.SpeakText(inboxHeader.get(0));
+                            synthesizer.SpeakText("Body: " + Bodies.get(0));
+                            reco.startContinuousRecognitionAsync();
+                            break;
+                        case "read all emails":
+                        case "play all emails":
+                        case "say all emails":
+                        case "tell all emails":
+                            if (messageCounts < 1) break;
+                            reco.stopContinuousRecognitionAsync();
+                            for (int i = 0; i < messageCounts; i++) {
+                                synthesizer.SpeakText(inboxHeader.get(i));
+                                synthesizer.SpeakText("Body: " + Bodies.get(i));
+                            }
                             reco.startContinuousRecognitionAsync();
                             break;
                     }
@@ -215,7 +232,9 @@ public class MainActivity extends AppCompatActivity {
     public void writeNewMail(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
+        reco.close();
         synthesizer.close();
+        speechConfig.close();
         microphoneStream.close();
         Intent intent = new Intent(this, SendMailActivity.class);
         startActivity(intent);
@@ -224,7 +243,9 @@ public class MainActivity extends AppCompatActivity {
     public void logOut(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
+        reco.close();
         synthesizer.close();
+        speechConfig.close();
         microphoneStream.close();
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove("Email");
@@ -275,6 +296,7 @@ public class MainActivity extends AppCompatActivity {
                 mailChecker.login();
                 allMessages = mailChecker.getMessages();
                 messageCount = mailChecker.getMessageCount();
+                messageCounts = messageCount;
                 for (int i = messageCount - 1; i >= 0; i--) {
                     String Header = "From: ";
                     Header += allMessages[i].getFrom()[0].toString();
@@ -286,11 +308,30 @@ public class MainActivity extends AppCompatActivity {
                         Header += allMessages[i].getSubject();
                         inboxHeader.add(Header);
                     }
+                    getEmailBody(allMessages[i]);
+                    if (Body.isEmpty()) {
+                        Body = "empty body";
+                    }
+                    Bodies.add(Body);//Adding for read body with command.
                 }
                 return true;
             } catch (Exception ex) {
                 return false;
             }
+        }
+
+        public void getEmailBody(Part p) throws Exception {
+            String sa = p.getContentType();
+            if (p.isMimeType("multipart/*")) {
+                Multipart mp = (Multipart) p.getContent();
+                int count = mp.getCount();
+                for (int i = 0; i < count; i++)
+                    getEmailBody(mp.getBodyPart(i));
+            } else if (p.isMimeType("text/plain")) {
+                Body = p.getContent().toString();
+            } /*else if (p.isMimeType("text/html")) {
+                Body = HtmlCompat.fromHtml(p.getContent().toString(), 0).toString();
+            }*/ // discuss
         }
     }
 

@@ -75,7 +75,7 @@ public class LoginActivity extends AppCompatActivity {
         introductionText += "When you finish telling your input, you can use stop or end keyword to finish listening. ";
         introductionText += "When you finish entering email address and password fields. You can use login keyword to enter your email account. ";
         introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
-        introductionText += "If you want to listen this introduction part again. You can use repeat commands keyword to replay introduction. ";
+        introductionText += "If you want to listen this introduction part again. You can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
         RecordEmail = false;
@@ -131,15 +131,9 @@ public class LoginActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("LoginOnCreateException:", e.getMessage());
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Log.i("OnStart", "OnStart called.");
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
-        final String logTag = "reco 3";
+        final String logTag = "Login reco 3";
         ArrayList<String> content = new ArrayList<>();
         clearTextBox();
 
@@ -156,7 +150,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
                         || comparedText.equals("quit application") || comparedText.equals("exit application")
                         || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
-                    android.os.Process.killProcess(android.os.Process.myPid());
+                    finishAffinity();
                     System.exit(1);
                 }
                 if (isSpeakStop) {
@@ -243,7 +237,7 @@ public class LoginActivity extends AppCompatActivity {
 
                             RecordEmail = false;
                             reco.startContinuousRecognitionAsync();
-                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
+                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")|| comparedText.equals("help")) {
                             reco.stopContinuousRecognitionAsync();
                             String speakText = "Replaying introduction now";
                             SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -264,8 +258,6 @@ public class LoginActivity extends AppCompatActivity {
                         String speakText = "Logging in now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                         result.close();
-                        synthesizer.close();
-                        speechConfig.close();
                         if (!speechSynthesisResult.isCancelled())
                             speechSynthesisResult.cancel(true);
 
@@ -283,8 +275,6 @@ public class LoginActivity extends AppCompatActivity {
             displayException(ex);
         }
     }
-
-
     @Override
     public void onBackPressed() {
     }
@@ -330,7 +320,9 @@ public class LoginActivity extends AppCompatActivity {
         if (!isSpeakStop) return;
         if (result) {
             reco.stopContinuousRecognitionAsync();
+            reco.close();
             synthesizer.close();
+            speechConfig.close();
             microphoneStream.close();
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("Email", emailAddress);

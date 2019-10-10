@@ -94,7 +94,9 @@ public class SendMailActivity extends AppCompatActivity {
         introductionText += "When you finish telling your input, you can use stop or end keyword to finish listening. ";
         introductionText += "When you finish entering all the necessary fields. You can use send or deliver keyword to send the email. ";
         introductionText += "You will get a response whether your email is send or not. ";
-        introductionText += "If you want to listen this introduction part again. You can use repeat commands keyword to replay introduction. ";
+        introductionText += "You can use delete, discard or back keywords to discard email you wrote and go main page. ";
+        introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
+        introductionText += "If you want to listen this introduction part again. You can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now!";
 
         RecordBody = false;
@@ -137,15 +139,9 @@ public class SendMailActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("MainCreateOnException", e.getMessage());
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
-        final String logTag = "reco 3";
+        final String logTag = "Send reco 3";
         ArrayList<String> content = new ArrayList<>();
 
         try {
@@ -162,12 +158,12 @@ public class SendMailActivity extends AppCompatActivity {
                 if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
                         || comparedText.equals("quit application") || comparedText.equals("exit application")
                         || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
-                    android.os.Process.killProcess(android.os.Process.myPid());
+                    finishAffinity();
                     System.exit(1);
                 }
 
                 if (isSpeakStop) {
-                    if (comparedText.equals("repeat command") || comparedText.equals("repeat commands")) {
+                    if (comparedText.equals("repeat command") || comparedText.equals("repeat commands") || comparedText.equals("help")) {
                         reco.stopContinuousRecognitionAsync();
                         String speakText = "Replaying introduction now";
                         SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -277,17 +273,12 @@ public class SendMailActivity extends AppCompatActivity {
                     }
 
                     if (comparedText.equals("send") || comparedText.equals("deliver") || comparedText.equals("sent")) {
-                        reco.stopContinuousRecognitionAsync();
                         send_button.callOnClick();
                         reco.startContinuousRecognitionAsync();
                     }
                     if (comparedText.equals("discard") || comparedText.equals("back") || comparedText.equals("delete")) {
-                        reco.stopContinuousRecognitionAsync();
                         String successText = "Email discarded! ";
                         synthesizer.SpeakText(successText);
-                        synthesizer.close();
-                        speechConfig.close();
-                        microphoneStream.close();
                         back_button.callOnClick();
                     }
                 }
@@ -298,7 +289,6 @@ public class SendMailActivity extends AppCompatActivity {
             System.out.println(ex.getMessage());
         }
     }
-
 
     public void onClickMail(View view) {
         if (!isSpeakStop) return;
@@ -312,6 +302,8 @@ public class SendMailActivity extends AppCompatActivity {
             result = new SendEmailAsyncTask().execute().get();
             if (result) {
                 Toast.makeText(this, "Mail Sent.", Toast.LENGTH_SHORT).show();
+                reco.stopContinuousRecognitionAsync();
+                reco.close();
                 synthesizer.SpeakText("Mail sent successfully. ");
                 synthesizer.close();
                 speechConfig.close();
@@ -332,9 +324,10 @@ public class SendMailActivity extends AppCompatActivity {
 
     public void onBack(View view) {
         if (!isSpeakStop) return;
+        reco.stopContinuousRecognitionAsync();
+        reco.close();
         microphoneStream.close();
         synthesizer.close();
-        reco.stopContinuousRecognitionAsync();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent); // change later
     }
@@ -406,9 +399,11 @@ public class SendMailActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (!isSpeakStop) return;
-        microphoneStream.close();
-        synthesizer.close();
         reco.stopContinuousRecognitionAsync();
+        reco.close();
+        synthesizer.close();
+        speechConfig.close();
+        microphoneStream.close();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent); // change later
     }

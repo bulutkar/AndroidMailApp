@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.text.HtmlCompat;
 
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
@@ -74,8 +73,9 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         introductionText = "Welcome to read single mail page! ";
         introductionText += "You can use read, tell or say keywords to hear mail's sender, subject and body. ";
         introductionText += "For example read subject will tell you the subject of the mail. ";
-        introductionText += "You can use go back keyword to return to main screen. ";
-        introductionText += "If you want to listen this introduction part again, you can use repeat commands keyword to replay introduction. ";
+        introductionText += "You can use go back or return keywords to return to main screen. ";
+        introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
+        introductionText += "If you want to listen this introduction part again, you can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now! ";
 
 
@@ -101,8 +101,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                     editor.putBoolean("isRead", true);
                     editor.apply();
                 });
-            }
-            else {
+            } else {
                 speechSynthesisResult = synthesizer.SpeakTextAsync("You are in read single mail page! Listening your commands now!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
@@ -113,14 +112,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("ReadMailOnCreateEx", e.getMessage());
         }
-
-
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        final String logTag = "reco 3";
+        final String logTag = "Single reco 3";
         ArrayList<String> content = new ArrayList<>();
 
         try {
@@ -146,7 +138,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                 if (comparedText.equals("quit from application") || comparedText.equals("exit from application")
                         || comparedText.equals("quit application") || comparedText.equals("exit application")
                         || comparedText.equals("quit from app") || comparedText.equals("exit from app")) {
-                    android.os.Process.killProcess(android.os.Process.myPid());
+                    finishAffinity();
                     System.exit(1);
                 }
                 if (isSpeakStop) {
@@ -182,6 +174,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                             break;
                         case "repeat command":
                         case "repeat commands":
+                        case "help":
                             reco.stopContinuousRecognitionAsync();
                             SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
                             result.close();
@@ -192,12 +185,8 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                         case "back":
                         case "go back":
                         case "return":
-                            reco.stopContinuousRecognitionAsync();
                             String successText = "Going back to main screen. ";
                             synthesizer.SpeakText(successText);
-                            synthesizer.close();
-                            speechConfig.close();
-                            microphoneStream.close();
                             // this.onBackPressed(); // check this works, if yes remove back buttons completely
                             back_button.callOnClick();
                             break;
@@ -209,6 +198,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
+
     }
 
     public SpeechConfig createSpeechConfig(String key, String region) {
@@ -245,9 +235,11 @@ public class ReadSingleMailActivity extends AppCompatActivity {
 
     public void onBack(View view) {
         if (!isSpeakStop) return;
-        microphoneStream.close();
-        synthesizer.close();
         reco.stopContinuousRecognitionAsync();
+        reco.close();
+        synthesizer.close();
+        speechConfig.close();
+        microphoneStream.close();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent); // change later
     }
@@ -255,9 +247,11 @@ public class ReadSingleMailActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (!isSpeakStop) return;
-        microphoneStream.close();
-        synthesizer.close();
         reco.stopContinuousRecognitionAsync();
+        reco.close();
+        synthesizer.close();
+        speechConfig.close();
+        microphoneStream.close();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent); // change later
     }
@@ -289,21 +283,20 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                 messageCount = mailChecker.getMessageCount();
                 Subject = allMessages[messageCount - EmailId - 1].getSubject();
                 From = allMessages[messageCount - EmailId - 1].getFrom();
-                GetEmailBody(allMessages[messageCount - EmailId - 1]);
+                getEmailBody(allMessages[messageCount - EmailId - 1]);
                 return true;
             } catch (Exception ex) {
                 return false;
             }
         }
 
-        public void GetEmailBody(Part p) throws Exception {
+        public void getEmailBody(Part p) throws Exception {
             String sa = p.getContentType();
-            sa = sa;
             if (p.isMimeType("multipart/*")) {
                 Multipart mp = (Multipart) p.getContent();
                 int count = mp.getCount();
                 for (int i = 0; i < count; i++)
-                    GetEmailBody(mp.getBodyPart(i));
+                    getEmailBody(mp.getBodyPart(i));
             } else if (p.isMimeType("text/plain")) {
                 Body = p.getContent().toString();
             } /*else if (p.isMimeType("text/html")) {
