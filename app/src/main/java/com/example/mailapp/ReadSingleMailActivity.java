@@ -186,6 +186,18 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                             result.close();
                             reco.startContinuousRecognitionAsync();
                             break;
+                        case "back":
+                        case "go back":
+                        case "return":
+                            reco.stopContinuousRecognitionAsync();
+                            String successText = "Going back to main screen. ";
+                            synthesizer.SpeakText(successText);
+                            synthesizer.close();
+                            speechConfig.close();
+                            microphoneStream.close();
+                            // this.onBackPressed(); // check this works, if yes remove back buttons completely
+                            back_button.callOnClick();
+                            break;
                     }
                 }
                 content.add(s);
