@@ -54,11 +54,12 @@ public class MainActivity extends AppCompatActivity {
     private SpeechSynthesizer synthesizer;
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
+    private Future<SpeechSynthesisResult> speechSynthesisResult;
+    private AudioConfig audioInput;
+
     private boolean isSpeakStop;
     private String introductionText;
     private List<String> inboxHeader;
-    Future<SpeechSynthesisResult> speechSynthesisResult;
-    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -271,29 +272,6 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         inboxHeader.add(allMessages[i].getSubject());
                     }
-                    /*Object content = allMessages[i].getContent();
-                    if (content instanceof String) {
-                        String email = (String)content;
-                        inboxPlainText.add(email);
-                    }
-                    else if (content instanceof Multipart) {
-                        Multipart multipart = (Multipart) content;
-                        int multipartCount = multipart.getCount();
-                        for (int j = 0; j < multipartCount; j++) {
-                            BodyPart bodyPart = multipart.getBodyPart(j);
-                            Object o = bodyPart.getContent();
-                            String contentType = bodyPart.getContentType().substring(0, 9);
-                            if (o instanceof String) {
-                                String email = (String)o;
-                                if (contentType.equals("TEXT/HTML")) {
-                                    inboxHtml.add(HtmlCompat.fromHtml(email, 0));
-                                }
-                                else {
-                                    inboxPlainText.add(email);
-                                }
-                            }
-                        }
-                    }*/
                 }
                 return true;
             } catch (Exception ex) {

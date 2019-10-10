@@ -58,6 +58,8 @@ public class SendMailActivity extends AppCompatActivity {
     private SpeechSynthesizer synthesizer;
     private MicrophoneStream microphoneStream;
     private SpeechRecognizer reco;
+    private Future<SpeechSynthesisResult> speechSynthesisResult;
+    private AudioConfig audioInput;
 
     private String introductionText;
     private boolean RecordReceiver;
@@ -67,8 +69,6 @@ public class SendMailActivity extends AppCompatActivity {
     private List<String> SubjectInput;
     private List<String> BodyInput;
     private boolean isSpeakStop;
-    Future<SpeechSynthesisResult> speechSynthesisResult;
-    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -325,13 +325,16 @@ public class SendMailActivity extends AppCompatActivity {
             result = new SendEmailAsyncTask().execute().get();
             if (result) {
                 Toast.makeText(this, "Mail Sent.", Toast.LENGTH_SHORT).show();
-                return true;
+                synthesizer.SpeakText("Mail sent. ");
+                return true; // change activity when sending mail with actual button click
             } else {
                 Toast.makeText(this, "Sending Failed.", Toast.LENGTH_SHORT).show();
+                synthesizer.SpeakText("Sending failed. ");
                 return false;
             }
         } catch (Exception e) {
             Toast.makeText(this, "Sending Failed. Exception.", Toast.LENGTH_SHORT).show();
+            synthesizer.SpeakText("Sending failed. ");
             return false;
         }
     }

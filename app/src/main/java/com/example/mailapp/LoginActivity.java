@@ -45,6 +45,8 @@ public class LoginActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences2;
     private SpeechConfig speechConfig;
     private SpeechSynthesizer synthesizer;
+    private Future<SpeechSynthesisResult> speechSynthesisResult;
+    private AudioConfig audioInput;
 
     private boolean RecordEmail;
     private boolean RecordPassword;
@@ -54,8 +56,6 @@ public class LoginActivity extends AppCompatActivity {
     private String password;
     private String introductionText;
     private boolean isSpeakStop;
-    Future<SpeechSynthesisResult> speechSynthesisResult;
-    AudioConfig audioInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
