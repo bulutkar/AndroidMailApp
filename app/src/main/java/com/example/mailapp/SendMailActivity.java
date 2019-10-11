@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -94,7 +93,7 @@ public class SendMailActivity extends AppCompatActivity {
         introductionText += "When you finish telling your input, you can use stop or end keyword to finish listening. ";
         introductionText += "When you finish entering all the necessary fields. You can use send or deliver keyword to send the email. ";
         introductionText += "You will get a response whether your email is send or not. ";
-        introductionText += "You can use delete, discard or back keywords to discard email you wrote and go main page. ";
+        introductionText += "You can use delete, discard or go back keywords to discard email you wrote and go main page. ";
         introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
         introductionText += "If you want to listen this introduction part again. You can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now!";
@@ -163,15 +162,7 @@ public class SendMailActivity extends AppCompatActivity {
                 }
 
                 if (isSpeakStop) {
-                    if (comparedText.equals("repeat command") || comparedText.equals("repeat commands") || comparedText.equals("help")) {
-                        reco.stopContinuousRecognitionAsync();
-                        String speakText = "Replaying introduction now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        result.close();
-                        result = synthesizer.SpeakText(introductionText);
-                        result.close();
-                        reco.startContinuousRecognitionAsync();
-                    } else if (!RecordSubject && !RecordReceiver && !RecordBody) {
+                    if (!RecordSubject && !RecordReceiver && !RecordBody) {
                         switch (comparedText) {
                             case "start receiver":
                             case "begin receiver":
@@ -214,6 +205,34 @@ public class SendMailActivity extends AppCompatActivity {
                                 RecordBody = true;
                                 reco.startContinuousRecognitionAsync();
                                 break;
+                            }
+                            case "repeat command":
+                            case "repeat commands":
+                            case "help": {
+                                isSpeakStop = false;
+                                reco.stopContinuousRecognitionAsync();
+                                String speakText = "Replaying introduction now";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                result = synthesizer.SpeakText(introductionText);
+                                result.close();
+                                reco.startContinuousRecognitionAsync();
+                                isSpeakStop = true;
+                                break;
+                            }
+                            case "send":
+                            case "deliver":
+                            case "delivered":
+                            case "sent": {
+                                send_button.callOnClick();
+                                reco.startContinuousRecognitionAsync();
+                            }
+                            case "discard":
+                            case "go back":
+                            case "delete": {
+                                String successText = "Email discarded! ";
+                                synthesizer.SpeakText(successText);
+                                back_button.callOnClick();
                             }
                         }
                     } else if (RecordBody) {
@@ -271,16 +290,6 @@ public class SendMailActivity extends AppCompatActivity {
                             SubjectInput.add(s.toLowerCase());
                         }
                     }
-
-                    if (comparedText.equals("send") || comparedText.equals("deliver") || comparedText.equals("sent")) {
-                        send_button.callOnClick();
-                        reco.startContinuousRecognitionAsync();
-                    }
-                    if (comparedText.equals("discard") || comparedText.equals("back") || comparedText.equals("delete")) {
-                        String successText = "Email discarded! ";
-                        synthesizer.SpeakText(successText);
-                        back_button.callOnClick();
-                    }
                 }
                 content.add(s);
             });
@@ -299,9 +308,9 @@ public class SendMailActivity extends AppCompatActivity {
         user = fromEmail; //change later. // trymyappfortest@gmail.com pw. A987654321
         Boolean result;
         try {
+            synthesizer.SpeakText("Mail sending. ");
             result = new SendEmailAsyncTask().execute().get();
             if (result) {
-                Toast.makeText(this, "Mail Sent.", Toast.LENGTH_SHORT).show();
                 reco.stopContinuousRecognitionAsync();
                 reco.close();
                 synthesizer.SpeakText("Mail sent successfully. ");
@@ -313,11 +322,9 @@ public class SendMailActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, MainActivity.class);
                 startActivity(intent); // change later
             } else {
-                Toast.makeText(this, "Sending Failed.", Toast.LENGTH_SHORT).show();
                 synthesizer.SpeakText("Sending failed. ");
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Sending Failed. Exception.", Toast.LENGTH_SHORT).show();
             synthesizer.SpeakText("Sending failed. ");
         }
     }

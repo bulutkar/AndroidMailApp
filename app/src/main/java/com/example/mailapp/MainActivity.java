@@ -25,22 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import javax.mail.Flags;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.RECORD_AUDIO;
-
-/*public static Drawable LoadImageFromWebOperations(String url) {
-    try {
-        InputStream is = (InputStream) new URL(url).getContent();
-        Drawable d = Drawable.createFromStream(is, "src name");
-        return d;
-    } catch (Exception e) {
-        return null;
-    }
-}*/
 
 public class MainActivity extends AppCompatActivity {
     private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
@@ -60,11 +52,15 @@ public class MainActivity extends AppCompatActivity {
     private AudioConfig audioInput;
 
     private boolean isSpeakStop;
+    private Message[] unSeenMessages;
     private String introductionText;
-    private List<String> inboxHeader;
+    private List<String> allInboxHeader;
+    private List<String> unseenInboxHeader;
     private String Body;
-    private List<String> Bodies;
-    private int messageCounts;
+    private List<String> allBodies;
+    private List<String> unseenBodies;
+    private int allMessageCount;
+    private int unseenMessageCounts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,8 +76,9 @@ public class MainActivity extends AppCompatActivity {
         introductionText = "Welcome to the main page! ";
         introductionText += "You can use start email, new email, start new email, create email keywords to send a new mail. ";
         introductionText += "You can use logout keyword to logout from your account, you will be redirected to login screen. ";
-        introductionText += "You can listen the subject, sender and body information of last mail you received by saying play last email, say last email, tell last email, read last email keywords. ";
-        introductionText += "You can listen the subject and sender information of all mails you received by saying play all emails, say all emails, tell all emails, read all emails keywords. ";
+        introductionText += "You can listen the subject, sender and body information of last mail you received by saying play last email, say last email, tell last email, read last email or message keywords. ";
+        introductionText += "You can listen the subject and sender information of all mails you received by saying play all emails, say all emails, tell all emails, read all emails or messages keywords. ";
+        introductionText += "You can listen the subject and sender information of all unseen mails you received by saying play unseen emails, say unseen emails, unseen all emails, read unseen emails or messages keywords. ";
         introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
         introductionText += "If you want to listen this introduction part again, you can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now! ";
@@ -108,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.apply();
                 });
             } else {
-                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in main page! Listening your commands now!");
+                speechSynthesisResult = synthesizer.SpeakTextAsync("You are in main page!");
                 synthesizer.SynthesisCompleted.addEventListener((o, e) -> {
                     e.close();
                     speechSynthesisResult.cancel(true);
@@ -121,17 +118,10 @@ public class MainActivity extends AppCompatActivity {
         final String logTag = "Main reco 3";
         ArrayList<String> content = new ArrayList<>();
 
-        inboxHeader = new ArrayList<String>();
-        Bodies = new ArrayList<String>();
-        try {
-            boolean result = new ReceiveMailAsyncTask().execute().get();
-            if (result) {
-                ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, inboxHeader);
-                inboxList.setAdapter(dataAdapter);
-            }
-        } catch (Exception ex) {
-            System.out.println(ex.toString());
-        }
+        allInboxHeader = new ArrayList<String>();
+        allBodies = new ArrayList<String>();
+        unseenBodies = new ArrayList<String>();
+        unseenInboxHeader = new ArrayList<String>();
 
         inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
             if (!isSpeakStop) return;
@@ -188,33 +178,99 @@ public class MainActivity extends AppCompatActivity {
                         case "repeat command":
                         case "repeat commands":
                         case "help":
+                            isSpeakStop = false;
                             reco.stopContinuousRecognitionAsync();
-                            SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
+                            String speakText = "Replaying introduction now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                             result.close();
                             result = synthesizer.SpeakText(introductionText);
                             result.close();
                             reco.startContinuousRecognitionAsync();
+                            isSpeakStop = true;
                             break;
                         case "play last email":
                         case "say last email":
                         case "tell last email":
                         case "read last email":
-                            if (messageCounts < 1) break;
+                        case "play last message":
+                        case "say last message":
+                        case "tell last message":
+                        case "read last message":
                             reco.stopContinuousRecognitionAsync();
-                            synthesizer.SpeakText(inboxHeader.get(0));
-                            synthesizer.SpeakText("Body: " + Bodies.get(0));
+                            if (allMessageCount < 1) {
+                                String text = "You have no messages.";
+                                SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                result2.close();
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            synthesizer.SpeakText(allInboxHeader.get(0));
+                            synthesizer.SpeakText("Body: " + allBodies.get(0));
+                            reco.startContinuousRecognitionAsync();
+                            break;
+                        case "read unseen emails":
+                        case "play unseen emails":
+                        case "say unseen emails":
+                        case "tell unseen emails":
+                        case "read unseen messages":
+                        case "play unseen messages":
+                        case "say unseen messages":
+                        case "tell unseen messages":
+                            reco.stopContinuousRecognitionAsync();
+                            if (unseenMessageCounts < 1) {
+                                String text = "You have no unread messages.";
+                                SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                result2.close();
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            for (int i = 0; i < unseenMessageCounts; i++) {
+                                synthesizer.SpeakText(unseenInboxHeader.get(i));
+                                synthesizer.SpeakText("Body: " + unseenBodies.get(i));
+                                try {
+                                    unSeenMessages[unseenMessageCounts - 1 - i].setFlag(Flags.Flag.SEEN, true);
+                                } catch (MessagingException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                             reco.startContinuousRecognitionAsync();
                             break;
                         case "read all emails":
                         case "play all emails":
                         case "say all emails":
                         case "tell all emails":
-                            if (messageCounts < 1) break;
+                        case "read all messages":
+                        case "play all messages":
+                        case "say all messages":
+                        case "tell all messages":
                             reco.stopContinuousRecognitionAsync();
-                            for (int i = 0; i < messageCounts; i++) {
-                                synthesizer.SpeakText(inboxHeader.get(i));
-                                synthesizer.SpeakText("Body: " + Bodies.get(i));
+                            if (allMessageCount < 1) {
+                                String text = "You have no messages.";
+                                SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                result2.close();
+                                reco.startContinuousRecognitionAsync();
+                                break;
                             }
+                            for (int i = 0; i < allMessageCount; i++) {
+                                synthesizer.SpeakText(allInboxHeader.get(i));
+                                synthesizer.SpeakText("Body: " + allBodies.get(i));
+                            }
+                            reco.startContinuousRecognitionAsync();
+                            break;
+                        case "fetch emails":
+                        case "check emails":
+                        case "fetch mails":
+                        case "check mails":
+                        case "fetch my emails":
+                        case "check my emails":
+                        case "fetch email":
+                        case "check email":
+                        case "fetch mail":
+                        case "check mail":
+                        case "fetch my email":
+                        case "check my email":
+                            reco.stopContinuousRecognitionAsync();
+                            fetchEmails();
                             reco.startContinuousRecognitionAsync();
                             break;
                     }
@@ -223,10 +279,39 @@ public class MainActivity extends AppCompatActivity {
             });
 
             final Future<Void> task = reco.startContinuousRecognitionAsync();
-
+            fetchEmails();
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+    }
+
+    public void fetchEmails() {
+        try {
+            boolean result = new ReceiveMailAsyncTask().execute().get();
+            String text = "Fetching your messages.";
+            synthesizer.SpeakTextAsync(text);
+            if (result) {
+                ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, allInboxHeader);
+                updateListView(inboxList, dataAdapter);
+                text = "Fetching successful. You have " + unseenMessageCounts + " new massages.";
+                synthesizer.SpeakTextAsync(text);
+            } else {
+                text = "Fetching failed.";
+                synthesizer.SpeakTextAsync(text);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+    }
+
+    private void updateListView(ListView listView, ArrayAdapter<String> adapter) {
+        MainActivity.this.runOnUiThread(() -> {
+            listView.setAdapter(adapter);
+        });
     }
 
     public void writeNewMail(View view) {
@@ -279,6 +364,7 @@ public class MainActivity extends AppCompatActivity {
         private MailChecker mailChecker;
         private Message[] allMessages;
         private int messageCount;
+        private int unseenMessageCount;
 
         public ReceiveMailAsyncTask() {
             if (BuildConfig.DEBUG)
@@ -295,24 +381,44 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mailChecker.login();
                 allMessages = mailChecker.getMessages();
+                unSeenMessages = mailChecker.getUnSeenMessages();
                 messageCount = mailChecker.getMessageCount();
-                messageCounts = messageCount;
+                unseenMessageCount = unSeenMessages.length;
+                unseenMessageCounts = unseenMessageCount;
+                allMessageCount = messageCount;
                 for (int i = messageCount - 1; i >= 0; i--) {
                     String Header = "From: ";
                     Header += allMessages[i].getFrom()[0].toString();
                     Header += "\r\nSubject: ";
                     if (allMessages[i].getSubject() == null) {
                         Header += "empty subject";
-                        inboxHeader.add(Header);
+                        allInboxHeader.add(Header);
                     } else {
                         Header += allMessages[i].getSubject();
-                        inboxHeader.add(Header);
+                        allInboxHeader.add(Header);
                     }
                     getEmailBody(allMessages[i]);
                     if (Body.isEmpty()) {
                         Body = "empty body";
                     }
-                    Bodies.add(Body);//Adding for read body with command.
+                    allBodies.add(Body);//Adding for read body with command.
+                }
+                for (int i = unseenMessageCount - 1; i >= 0; i--) {
+                    String Header = "From: ";
+                    Header += unSeenMessages[i].getFrom()[0].toString();
+                    Header += "\r\nSubject: ";
+                    if (unSeenMessages[i].getSubject() == null) {
+                        Header += "empty subject";
+                        unseenInboxHeader.add(Header);
+                    } else {
+                        Header += unSeenMessages[i].getSubject();
+                        unseenInboxHeader.add(Header);
+                    }
+                    getEmailBody(unSeenMessages[i]);
+                    if (Body.isEmpty()) {
+                        Body = "empty body";
+                    }
+                    unseenBodies.add(Body);//Adding for read body with command.
                 }
                 return true;
             } catch (Exception ex) {
@@ -333,9 +439,5 @@ public class MainActivity extends AppCompatActivity {
                 Body = HtmlCompat.fromHtml(p.getContent().toString(), 0).toString();
             }*/ // discuss
         }
-    }
-
-    @Override
-    public void onBackPressed() {
     }
 }

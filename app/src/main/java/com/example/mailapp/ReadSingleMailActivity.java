@@ -175,12 +175,15 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                         case "repeat command":
                         case "repeat commands":
                         case "help":
+                            isSpeakStop = false;
                             reco.stopContinuousRecognitionAsync();
-                            SpeechSynthesisResult result = synthesizer.SpeakText("Replaying introduction now! ");
+                            String speakText = "Replaying introduction now";
+                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
                             result.close();
                             result = synthesizer.SpeakText(introductionText);
                             result.close();
                             reco.startContinuousRecognitionAsync();
+                            isSpeakStop = true;
                             break;
                         case "back":
                         case "go back":

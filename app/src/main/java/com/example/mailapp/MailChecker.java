@@ -3,6 +3,7 @@ package com.example.mailapp;
 import java.security.Security;
 import java.util.Properties;
 
+import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -10,6 +11,7 @@ import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.URLName;
+import javax.mail.search.FlagTerm;
 
 public class MailChecker extends javax.mail.Authenticator {
     private String mailhost;
@@ -85,6 +87,9 @@ public class MailChecker extends javax.mail.Authenticator {
 
     public Message[] getMessages() throws MessagingException {
         return folder.getMessages();
+    }
+    public Message[] getUnSeenMessages()throws MessagingException{
+        return folder.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
     }
 
     protected PasswordAuthentication getPasswordAuthentication() {

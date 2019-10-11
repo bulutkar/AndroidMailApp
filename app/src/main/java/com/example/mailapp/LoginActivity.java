@@ -184,7 +184,9 @@ public class LoginActivity extends AppCompatActivity {
                                 break;
                             }
                             case "repeat commands":
-                            case "repeat command": {
+                            case "repeat command":
+                            case "help": {
+                                isSpeakStop = false;
                                 reco.stopContinuousRecognitionAsync();
                                 String speakText = "Replaying introduction now";
                                 SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
@@ -192,7 +194,19 @@ public class LoginActivity extends AppCompatActivity {
                                 result = synthesizer.SpeakText(introductionText);
                                 result.close();
                                 reco.startContinuousRecognitionAsync();
+                                isSpeakStop = true;
                                 break;
+                            }
+                            case "login":
+                            case "log in":
+                            case "looking": {
+                                String speakText = "Logging in now";
+                                SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
+                                result.close();
+                                if (!speechSynthesisResult.isCancelled())
+                                    speechSynthesisResult.cancel(true);
+
+                                loginButton.callOnClick();
                             }
                         }
                     } else if (RecordPassword) {
@@ -207,14 +221,6 @@ public class LoginActivity extends AppCompatActivity {
                             result.close();
                             pwInput.clear();
                             RecordPassword = false;
-                            reco.startContinuousRecognitionAsync();
-                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")) {
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Replaying introduction now";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            result = synthesizer.SpeakText(introductionText);
-                            result.close();
                             reco.startContinuousRecognitionAsync();
                         } else {
                             if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
@@ -237,31 +243,12 @@ public class LoginActivity extends AppCompatActivity {
 
                             RecordEmail = false;
                             reco.startContinuousRecognitionAsync();
-                        } else if (comparedText.equals("repeat commands") || comparedText.equals("repeat command")|| comparedText.equals("help")) {
-                            reco.stopContinuousRecognitionAsync();
-                            String speakText = "Replaying introduction now";
-                            SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                            result.close();
-                            result = synthesizer.SpeakText(introductionText);
-                            result.close();
-                            reco.startContinuousRecognitionAsync();
                         } else {
                             if (!s.isEmpty() && s.charAt(s.length() - 1) == '.') {
                                 s = s.substring(0, s.length() - 1);
                             }
                             emailInput.add(s.toLowerCase());
                         }
-                    }
-
-                    if (comparedText.equals("login") || comparedText.equals("log in") || comparedText.equals("looking")) {
-                        if (!isSpeakStop) return;
-                        String speakText = "Logging in now";
-                        SpeechSynthesisResult result = synthesizer.SpeakText(speakText);
-                        result.close();
-                        if (!speechSynthesisResult.isCancelled())
-                            speechSynthesisResult.cancel(true);
-
-                        loginButton.callOnClick();
                     }
                 }
                 content.add(s);
@@ -275,6 +262,7 @@ public class LoginActivity extends AppCompatActivity {
             displayException(ex);
         }
     }
+
     @Override
     public void onBackPressed() {
     }
