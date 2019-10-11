@@ -22,6 +22,7 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -52,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private AudioConfig audioInput;
 
     private boolean isSpeakStop;
-    private Message[] unSeenMessages;
-    private Message[] allMessages;
+    private List<Message> unSeenMessagesList;
+    private List<Message> allMessagesList;
     private String introductionText;
     private List<String> allInboxHeader;
     private List<String> unseenInboxHeader;
@@ -123,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
         allBodies = new ArrayList<String>();
         unseenBodies = new ArrayList<String>();
         unseenInboxHeader = new ArrayList<String>();
+        unSeenMessagesList = new ArrayList<Message>();
+        allMessagesList = new ArrayList<Message>();
 
         inboxList.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
             if (!isSpeakStop) return;
@@ -229,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
                                 synthesizer.SpeakText(unseenInboxHeader.get(i));
                                 synthesizer.SpeakText("Body: " + unseenBodies.get(i));
                                 try {
-                                    unSeenMessages[unseenMessageCounts - 1 - i].setFlag(Flags.Flag.SEEN, true);
+                                    unSeenMessagesList.get(unseenMessageCounts - 1 - i).setFlag(Flags.Flag.SEEN, true);
                                 } catch (MessagingException e) {
                                     e.printStackTrace();
                                 }
@@ -259,7 +262,9 @@ public class MainActivity extends AppCompatActivity {
                             }
                             reco.startContinuousRecognitionAsync();
                             break;
-                        case "delete last message": {
+                        case "delete last message":
+                        case "delete last email":
+                        case "delete last mail": {
                             reco.stopContinuousRecognitionAsync();
                             if (allMessageCount < 1) {
                                 String text = "You have no messages.";
@@ -269,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             }
                             try {
-                                allMessages[allMessageCount - 1].setFlag(Flags.Flag.DELETED, true);
+                                allMessagesList.get(allMessageCount - 1).setFlag(Flags.Flag.DELETED, true);
                                 synthesizer.SpeakText("last message is deleted.");
                                 fetchEmails();
                                 reco.startContinuousRecognitionAsync();
@@ -401,8 +406,16 @@ public class MainActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... params) {
             try {
                 mailChecker.login();
-                allMessages = mailChecker.getMessages();
-                unSeenMessages = mailChecker.getUnSeenMessages();
+                allInboxHeader.clear();
+                unseenBodies.clear();
+                allBodies.clear();
+                unseenInboxHeader.clear();
+                allMessagesList.clear();
+                unSeenMessagesList.clear();
+                Message[] allMessages = mailChecker.getMessages();
+                Message[] unSeenMessages = mailChecker.getUnSeenMessages();
+                allMessagesList.addAll(Arrays.asList(allMessages));
+                unSeenMessagesList.addAll(Arrays.asList(unSeenMessages));
                 messageCount = mailChecker.getMessageCount();
                 unseenMessageCount = unSeenMessages.length;
                 unseenMessageCounts = unseenMessageCount;
