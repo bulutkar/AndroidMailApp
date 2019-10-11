@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isSpeakStop;
     private Message[] unSeenMessages;
+    private Message[] allMessages;
     private String introductionText;
     private List<String> allInboxHeader;
     private List<String> unseenInboxHeader;
@@ -233,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
                             }
+                            fetchEmails();
                             reco.startContinuousRecognitionAsync();
                             break;
                         case "read all emails":
@@ -257,6 +259,26 @@ public class MainActivity extends AppCompatActivity {
                             }
                             reco.startContinuousRecognitionAsync();
                             break;
+                        case "delete last message": {
+                            reco.stopContinuousRecognitionAsync();
+                            if (allMessageCount < 1) {
+                                String text = "You have no messages.";
+                                SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                result2.close();
+                                reco.startContinuousRecognitionAsync();
+                                break;
+                            }
+                            try {
+                                allMessages[allMessageCount - 1].setFlag(Flags.Flag.DELETED, true);
+                                synthesizer.SpeakText("last message is deleted.");
+                                fetchEmails();
+                                reco.startContinuousRecognitionAsync();
+                            } catch (MessagingException e) {
+                                e.printStackTrace();
+                                reco.startContinuousRecognitionAsync();
+                            }
+                            break;
+                        }
                         case "fetch emails":
                         case "check emails":
                         case "fetch mails":
@@ -362,7 +384,6 @@ public class MainActivity extends AppCompatActivity {
 
     private class ReceiveMailAsyncTask extends AsyncTask<Void, Void, Boolean> {
         private MailChecker mailChecker;
-        private Message[] allMessages;
         private int messageCount;
         private int unseenMessageCount;
 
