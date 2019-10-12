@@ -18,11 +18,12 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesisResult;
 import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
-import java.util.ArrayList;
 import java.util.concurrent.Future;
 
 import javax.mail.Address;
+import javax.mail.Flags;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 
@@ -53,6 +54,8 @@ public class ReadSingleMailActivity extends AppCompatActivity {
     private String Body;
     private boolean isSpeakStop;
     private String introductionText;
+    private Message[] allMessages;
+    private int messageCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +77,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         introductionText += "You can use read, tell or say keywords to hear mail's sender, subject and body. ";
         introductionText += "For example read subject will tell you the subject of the mail. ";
         introductionText += "You can use go back or return keywords to return to main screen. ";
+        introductionText += "You can delete mail using delete message, delete email or delete mail keywords. ";
         introductionText += "When you want to quit from app, you can use quit application or exit application keywords any where in the application. ";
         introductionText += "If you want to listen this introduction part again, you can use repeat commands or help keywords to replay introduction. ";
         introductionText += "Listening your commands now! ";
@@ -113,8 +117,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
             Log.e("ReadMailOnCreateEx", e.getMessage());
         }
         final String logTag = "Single reco 3";
-        ArrayList<String> content = new ArrayList<>();
-
         try {
             boolean result = new ReadSingleMailAsyncTask().execute().get();
             if (result) {
@@ -123,9 +125,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
-
         try {
-            content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
 
@@ -165,11 +165,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                         case "say body":
                             reco.stopContinuousRecognitionAsync();
                             synthesizer.SpeakText(Body);
-                            /*speechSynthesisResult = synthesizer.SpeakTextAsync(Body);
-                            synthesizer.SynthesisCompleted.addEventListener((ob, e) -> {
-                                e.close();
-                                speechSynthesisResult.cancel(true);
-                            });*/
                             reco.startContinuousRecognitionAsync();
                             break;
                         case "repeat command":
@@ -185,17 +180,29 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                             reco.startContinuousRecognitionAsync();
                             isSpeakStop = true;
                             break;
+                        case "delete message":
+                        case "delete email":
+                        case "delete mail": {
+                            try {
+                                allMessages[messageCount - EmailId - 1].setFlag(Flags.Flag.DELETED, true);
+                                synthesizer.SpeakText("Message is deleted.");
+                                back_button.callOnClick();
+                            } catch (MessagingException e) {
+                                e.printStackTrace();
+                                synthesizer.SpeakText("Something was wrong. Message could not be deleted.");
+                                reco.startContinuousRecognitionAsync();
+                            }
+                            break;
+                        }
                         case "back":
                         case "go back":
                         case "return":
                             String successText = "Going back to main screen. ";
                             synthesizer.SpeakText(successText);
-                            // this.onBackPressed(); // check this works, if yes remove back buttons completely
                             back_button.callOnClick();
                             break;
                     }
                 }
-                content.add(s);
             });
             final Future<Void> task = reco.startContinuousRecognitionAsync();
         } catch (Exception ex) {
@@ -239,7 +246,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
     public void onBack(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         synthesizer.close();
         speechConfig.close();
         microphoneStream.close();
@@ -251,7 +257,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         synthesizer.close();
         speechConfig.close();
         microphoneStream.close();
@@ -267,8 +272,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
 
     private class ReadSingleMailAsyncTask extends AsyncTask<Void, Void, Boolean> {
         private MailChecker mailChecker;
-        private Message[] allMessages;
-        private int messageCount;
 
         public ReadSingleMailAsyncTask() {
             try {
@@ -302,9 +305,7 @@ public class ReadSingleMailActivity extends AppCompatActivity {
                     getEmailBody(mp.getBodyPart(i));
             } else if (p.isMimeType("text/plain")) {
                 Body = p.getContent().toString();
-            } /*else if (p.isMimeType("text/html")) {
-                Body = HtmlCompat.fromHtml(p.getContent().toString(), 0).toString();
-            }*/ // discuss
+            }
         }
     }
 }

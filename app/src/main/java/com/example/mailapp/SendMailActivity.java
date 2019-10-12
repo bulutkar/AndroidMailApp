@@ -141,10 +141,8 @@ public class SendMailActivity extends AppCompatActivity {
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "Send reco 3";
-        ArrayList<String> content = new ArrayList<>();
 
         try {
-            content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
 
@@ -225,7 +223,7 @@ public class SendMailActivity extends AppCompatActivity {
                             case "delivered":
                             case "sent": {
                                 send_button.callOnClick();
-                                reco.startContinuousRecognitionAsync();
+                                break;
                             }
                             case "discard":
                             case "go back":
@@ -233,12 +231,13 @@ public class SendMailActivity extends AppCompatActivity {
                                 String successText = "Email discarded! ";
                                 synthesizer.SpeakText(successText);
                                 back_button.callOnClick();
+                                break;
                             }
                         }
                     } else if (RecordBody) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < BodyInput.size(); i++) {
-                                body += BodyInput.get(i).replace(" ", "");
+                                body += BodyInput.get(i);
                                 body += " ";
                             }
                             changeTextView(email_body, body);
@@ -275,7 +274,7 @@ public class SendMailActivity extends AppCompatActivity {
                     } else if (RecordSubject) {
                         if (comparedText.equals("stop") || comparedText.equals("end")) {
                             for (int i = 0; i < SubjectInput.size(); i++) {
-                                subject += SubjectInput.get(i).replace(" ", "");
+                                subject += SubjectInput.get(i);
                                 subject += " ";
                             }
                             changeTextView(email_subject, subject);
@@ -287,11 +286,10 @@ public class SendMailActivity extends AppCompatActivity {
                             RecordSubject = false;
                             reco.startContinuousRecognitionAsync();
                         } else {
-                            SubjectInput.add(s.toLowerCase());
+                            SubjectInput.add(s);
                         }
                     }
                 }
-                content.add(s);
             });
             final Future<Void> task = reco.startContinuousRecognitionAsync();
         } catch (Exception ex) {
@@ -312,7 +310,6 @@ public class SendMailActivity extends AppCompatActivity {
             result = new SendEmailAsyncTask().execute().get();
             if (result) {
                 reco.stopContinuousRecognitionAsync();
-                reco.close();
                 synthesizer.SpeakText("Mail sent successfully. ");
                 synthesizer.close();
                 speechConfig.close();
@@ -323,6 +320,7 @@ public class SendMailActivity extends AppCompatActivity {
                 startActivity(intent); // change later
             } else {
                 synthesizer.SpeakText("Sending failed. ");
+                reco.startContinuousRecognitionAsync();
             }
         } catch (Exception e) {
             synthesizer.SpeakText("Sending failed. ");
@@ -332,7 +330,6 @@ public class SendMailActivity extends AppCompatActivity {
     public void onBack(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         microphoneStream.close();
         synthesizer.close();
         Intent intent = new Intent(this, MainActivity.class);
@@ -407,7 +404,6 @@ public class SendMailActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         synthesizer.close();
         speechConfig.close();
         microphoneStream.close();

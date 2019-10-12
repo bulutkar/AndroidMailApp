@@ -118,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
             Log.e("MainCreateOnException", e.getMessage());
         }
         final String logTag = "Main reco 3";
-        ArrayList<String> content = new ArrayList<>();
 
         allInboxHeader = new ArrayList<String>();
         allBodies = new ArrayList<String>();
@@ -138,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         try {
-            content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
 
@@ -168,8 +166,6 @@ public class MainActivity extends AppCompatActivity {
                         case "new mail":
                         case "start new mail":
                         case "create mail":
-                            if (!speechSynthesisResult.isCancelled())
-                                speechSynthesisResult.cancel(true);
                             newMailButton.callOnClick();
 
                             break;
@@ -202,14 +198,18 @@ public class MainActivity extends AppCompatActivity {
                         case "read last message":
                             reco.stopContinuousRecognitionAsync();
                             if (allMessageCount < 1) {
+                                isSpeakStop = false;
                                 String text = "You have no messages.";
                                 SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                isSpeakStop = true;
                                 result2.close();
                                 reco.startContinuousRecognitionAsync();
                                 break;
                             }
+                            isSpeakStop = false;
                             synthesizer.SpeakText(allInboxHeader.get(0));
                             synthesizer.SpeakText("Body: " + allBodies.get(0));
+                            isSpeakStop = true;
                             reco.startContinuousRecognitionAsync();
                             break;
                         case "read unseen emails":
@@ -222,12 +222,15 @@ public class MainActivity extends AppCompatActivity {
                         case "tell unseen messages":
                             reco.stopContinuousRecognitionAsync();
                             if (unseenMessageCounts < 1) {
+                                isSpeakStop = false;
                                 String text = "You have no unread messages.";
                                 SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                isSpeakStop = true;
                                 result2.close();
                                 reco.startContinuousRecognitionAsync();
                                 break;
                             }
+                            isSpeakStop = false;
                             for (int i = 0; i < unseenMessageCounts; i++) {
                                 synthesizer.SpeakText(unseenInboxHeader.get(i));
                                 synthesizer.SpeakText("Body: " + unseenBodies.get(i));
@@ -237,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
                             }
+                            isSpeakStop = true;
                             fetchEmails();
                             reco.startContinuousRecognitionAsync();
                             break;
@@ -248,18 +252,22 @@ public class MainActivity extends AppCompatActivity {
                         case "play all messages":
                         case "say all messages":
                         case "tell all messages":
+                            isSpeakStop = false;
                             reco.stopContinuousRecognitionAsync();
                             if (allMessageCount < 1) {
                                 String text = "You have no messages.";
                                 SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                isSpeakStop = true;
                                 result2.close();
                                 reco.startContinuousRecognitionAsync();
                                 break;
                             }
+                            isSpeakStop = false;
                             for (int i = 0; i < allMessageCount; i++) {
                                 synthesizer.SpeakText(allInboxHeader.get(i));
                                 synthesizer.SpeakText("Body: " + allBodies.get(i));
                             }
+                            isSpeakStop = true;
                             reco.startContinuousRecognitionAsync();
                             break;
                         case "delete last message":
@@ -267,15 +275,19 @@ public class MainActivity extends AppCompatActivity {
                         case "delete last mail": {
                             reco.stopContinuousRecognitionAsync();
                             if (allMessageCount < 1) {
+                                isSpeakStop = false;
                                 String text = "You have no messages.";
                                 SpeechSynthesisResult result2 = synthesizer.SpeakText(text);
+                                isSpeakStop = true;
                                 result2.close();
                                 reco.startContinuousRecognitionAsync();
                                 break;
                             }
                             try {
+                                isSpeakStop = false;
                                 allMessagesList.get(allMessageCount - 1).setFlag(Flags.Flag.DELETED, true);
                                 synthesizer.SpeakText("last message is deleted.");
+                                isSpeakStop = true;
                                 fetchEmails();
                                 reco.startContinuousRecognitionAsync();
                             } catch (MessagingException e) {
@@ -302,7 +314,6 @@ public class MainActivity extends AppCompatActivity {
                             break;
                     }
                 }
-                content.add(s);
             });
 
             final Future<Void> task = reco.startContinuousRecognitionAsync();
@@ -318,20 +329,23 @@ public class MainActivity extends AppCompatActivity {
 
     public void fetchEmails() {
         try {
+            isSpeakStop = false;
             boolean result = new ReceiveMailAsyncTask().execute().get();
             String text = "Fetching your messages.";
             synthesizer.SpeakTextAsync(text);
             if (result) {
                 ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, allInboxHeader);
                 updateListView(inboxList, dataAdapter);
-                text = "Fetching successful. You have " + unseenMessageCounts + " new massages.";
+                text = "Fetching successful. You have " + unseenMessageCounts + " new messages.";
                 synthesizer.SpeakTextAsync(text);
             } else {
                 text = "Fetching failed.";
                 synthesizer.SpeakTextAsync(text);
             }
+            isSpeakStop = true;
         } catch (Exception ex) {
             System.out.println(ex.toString());
+            isSpeakStop = true;
         }
     }
 
@@ -344,7 +358,6 @@ public class MainActivity extends AppCompatActivity {
     public void writeNewMail(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         synthesizer.close();
         speechConfig.close();
         microphoneStream.close();
@@ -355,7 +368,6 @@ public class MainActivity extends AppCompatActivity {
     public void logOut(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
-        reco.close();
         synthesizer.close();
         speechConfig.close();
         microphoneStream.close();

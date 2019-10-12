@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,8 +21,6 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static android.Manifest.permission.INTERNET;
@@ -34,7 +31,6 @@ public class LoginActivity extends AppCompatActivity {
     private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
     private static final String SpeechRegion = "westus";
 
-    private TextView recognizedTextView;
     private Button loginButton;
     private TextView emailTextView;
     private TextView passwordTextView;
@@ -65,7 +61,6 @@ public class LoginActivity extends AppCompatActivity {
         String userMail = sharedPreferences.getString("Email", "empty");
         String userPassword = sharedPreferences.getString("Password", " ");
 
-        recognizedTextView = findViewById(R.id.recognizedText);
         loginButton = findViewById(R.id.buttonLogin);
         emailTextView = findViewById(R.id.inputEmail);
         passwordTextView = findViewById(R.id.inputPassword);
@@ -103,7 +98,6 @@ public class LoginActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(LoginActivity.this, new String[]{RECORD_AUDIO, INTERNET}, permissionRequestId);
         } catch (Exception ex) {
             Log.e("SpeechSDK", "could not init sdk, " + ex.toString());
-            recognizedTextView.setText("Could not initialize: " + ex.toString());
         }
         try {
             speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
@@ -134,11 +128,7 @@ public class LoginActivity extends AppCompatActivity {
         speechConfig = createSpeechConfig(SpeechSubscriptionKey, SpeechRegion);
         synthesizer = new SpeechSynthesizer(speechConfig);
         final String logTag = "Login reco 3";
-        ArrayList<String> content = new ArrayList<>();
-        clearTextBox();
-
         try {
-            content.clear();
             audioInput = AudioConfig.fromStreamInput(createMicrophoneStream());
             reco = new SpeechRecognizer(speechConfig, audioInput);
 
@@ -207,6 +197,7 @@ public class LoginActivity extends AppCompatActivity {
                                     speechSynthesisResult.cancel(true);
 
                                 loginButton.callOnClick();
+                                break;
                             }
                         }
                     } else if (RecordPassword) {
@@ -251,15 +242,12 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     }
                 }
-                content.add(s);
-                setRecognizedText(TextUtils.join(" ", content));
             });
 
             final Future<Void> task = reco.startContinuousRecognitionAsync();
 
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
-            displayException(ex);
         }
     }
 
@@ -274,7 +262,6 @@ public class LoginActivity extends AppCompatActivity {
             return speechConfig;
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
-            displayException(ex);
             return null;
         }
     }
@@ -308,7 +295,6 @@ public class LoginActivity extends AppCompatActivity {
         if (!isSpeakStop) return;
         if (result) {
             reco.stopContinuousRecognitionAsync();
-            reco.close();
             synthesizer.close();
             speechConfig.close();
             microphoneStream.close();
@@ -325,65 +311,11 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void displayException(Exception ex) {
-        recognizedTextView.setText(ex.getMessage() + System.lineSeparator() + TextUtils.join(System.lineSeparator(), ex.getStackTrace()));
-    }
-
-    private void clearTextBox() {
-        AppendTextLine("", true);
-    }
-
     private void changeTextView(TextView textView, String text) {
         LoginActivity.this.runOnUiThread(() -> {
             textView.setText(text);
         });
     }
-
-    private void setRecognizedText(final String s) {
-        AppendTextLine(s, true);
-    }
-
-    private void AppendTextLine(final String s, final Boolean erase) {
-        LoginActivity.this.runOnUiThread(() -> {
-            if (erase) {
-                recognizedTextView.setText(s);
-            } else {
-                String txt = recognizedTextView.getText().toString();
-                recognizedTextView.setText(txt + System.lineSeparator() + s);
-            }
-        });
-    }
-
-    private void disableButtons() {
-        LoginActivity.this.runOnUiThread(() -> {
-
-        });
-    }
-
-    private void enableButtons() {
-        LoginActivity.this.runOnUiThread(() -> {
-
-        });
-    }
-
-    private <T> void setOnTaskCompletedListener(Future<T> task, OnTaskCompletedListener<T> listener) {
-        s_executorService.submit(() -> {
-            T result = task.get();
-            listener.onCompleted(result);
-            return null;
-        });
-    }
-
-    private interface OnTaskCompletedListener<T> {
-        void onCompleted(T taskResult);
-    }
-
-    private static ExecutorService s_executorService;
-
-    static {
-        s_executorService = Executors.newCachedThreadPool();
-    }
-
     private class LoginAsyncTask extends AsyncTask<Void, Void, Boolean> {
         MailChecker checker;
 
