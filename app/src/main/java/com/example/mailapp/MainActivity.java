@@ -287,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
                                 isSpeakStop = false;
                                 allMessagesList.get(allMessageCount - 1).setFlag(Flags.Flag.DELETED, true);
                                 synthesizer.SpeakText("last message is deleted.");
-                                isSpeakStop = true;
                                 fetchEmails();
                                 reco.startContinuousRecognitionAsync();
                             } catch (MessagingException e) {
@@ -309,8 +308,19 @@ public class MainActivity extends AppCompatActivity {
                         case "fetch my email":
                         case "check my email":
                             reco.stopContinuousRecognitionAsync();
-                            fetchEmails();
+                            isSpeakStop = true;
+                            String text = "Fetching your messages.";
+                            synthesizer.SpeakText(text);
+                            boolean resultFetch = fetchEmails();
+                            if (resultFetch) {
+                                text = "Fetching successful. You have " + unseenMessageCounts + " new messages.";
+                                synthesizer.SpeakText(text);
+                            } else {
+                                text = "Fetching failed.";
+                                synthesizer.SpeakText(text);
+                            }
                             reco.startContinuousRecognitionAsync();
+                            isSpeakStop = true;
                             break;
                     }
                 }
@@ -327,25 +337,17 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
     }
 
-    public void fetchEmails() {
+    public boolean fetchEmails() {
         try {
-            isSpeakStop = false;
             boolean result = new ReceiveMailAsyncTask().execute().get();
-            String text = "Fetching your messages.";
-            synthesizer.SpeakTextAsync(text);
             if (result) {
                 ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, allInboxHeader);
                 updateListView(inboxList, dataAdapter);
-                text = "Fetching successful. You have " + unseenMessageCounts + " new messages.";
-                synthesizer.SpeakTextAsync(text);
-            } else {
-                text = "Fetching failed.";
-                synthesizer.SpeakTextAsync(text);
             }
-            isSpeakStop = true;
+            return result;
         } catch (Exception ex) {
             System.out.println(ex.toString());
-            isSpeakStop = true;
+            return false;
         }
     }
 
