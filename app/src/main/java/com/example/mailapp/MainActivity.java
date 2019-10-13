@@ -357,6 +357,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void onFetch(View view) {
+        if (!isSpeakStop) return;
+        try {
+            boolean result = new ReceiveMailAsyncTask().execute().get();
+            if (result) {
+                ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, allInboxHeader);
+                updateListView(inboxList, dataAdapter);
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+    }
+
     public void writeNewMail(View view) {
         if (!isSpeakStop) return;
         reco.stopContinuousRecognitionAsync();
