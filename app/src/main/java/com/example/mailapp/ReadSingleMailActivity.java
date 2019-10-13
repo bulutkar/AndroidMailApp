@@ -237,10 +237,6 @@ public class ReadSingleMailActivity extends AppCompatActivity {
         }
         changeTextView(MailSubject, Subject);
         changeTextView(MailBody, Body);
-        try {
-        } catch (Exception ex) {
-            Log.e("SetMailException", ex.getMessage());
-        }
     }
 
     public void onBack(View view) {

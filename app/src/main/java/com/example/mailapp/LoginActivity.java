@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "Logging In...", Toast.LENGTH_SHORT).show();
             emailTextView.setText(userMail);
             passwordTextView.setText(userPassword);
-            Boolean result = tryLogin();
+            boolean result = tryLogin();
             if (result) {
                 Toast.makeText(this, "Logged In.", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, MainActivity.class);
@@ -291,7 +291,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onLogin(View view) {
-        Boolean result = tryLogin();
+        boolean result = tryLogin();
         if (!isSpeakStop) return;
         if (result) {
             reco.stopContinuousRecognitionAsync();
