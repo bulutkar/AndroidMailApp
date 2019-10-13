@@ -10,12 +10,12 @@
         android:id="@+id/from"
         android:layout_width="93dp"
         android:layout_height="52dp"
+        android:layout_marginTop="24dp"
         android:text="From:"
-        app:layout_constraintBottom_toTopOf="@+id/subject"
         app:layout_constraintEnd_toStartOf="@+id/mailFrom"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.764" />
+        app:layout_constraintTop_toBottomOf="@+id/back_button" />
 
     <TextView
         android:id="@+id/mailBody"
@@ -31,23 +31,23 @@
 
     <TextView
         android:id="@+id/mailSubject"
-        android:layout_width="315dp"
-        android:layout_height="66dp"
+        android:layout_width="318dp"
+        android:layout_height="62dp"
+        android:layout_marginTop="4dp"
         android:text=""
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/subject"
         app:layout_constraintTop_toBottomOf="@+id/mailFrom" />
 
     <TextView
         android:id="@+id/subject"
         android:layout_width="93dp"
-        android:layout_height="52dp"
+        android:layout_height="48dp"
         android:text="Subject:"
         app:layout_constraintBottom_toTopOf="@+id/mailBody"
+        app:layout_constraintEnd_toStartOf="@+id/mailSubject"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.875" />
+        app:layout_constraintTop_toBottomOf="@+id/from" />
 
     <TextView
         android:id="@+id/mailFrom"
@@ -64,10 +64,8 @@
         android:layout_height="37dp"
         android:onClick="onBack"
         android:text="Back"
-        app:layout_constraintBottom_toTopOf="@+id/from"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
