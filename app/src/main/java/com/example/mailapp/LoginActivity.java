@@ -28,8 +28,8 @@ import static android.Manifest.permission.RECORD_AUDIO;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String SpeechSubscriptionKey = "49551d7f82684ae196690097a1c79e0f";
-    private static final String SpeechRegion = "westus";
+    private static final String SpeechSubscriptionKey = "7f54f290e9b64c45a3d649ecf5d0c7ba";
+    private static final String SpeechRegion = "eastus";
 
     private Button loginButton;
     private TextView emailTextView;
